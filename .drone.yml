@@ -1,0 +1,66 @@
+kind: pipeline
+type: docker
+name: paul-wrubel-dev
+
+clone:
+  disable: true
+
+steps:
+  - name: clone
+    image: alpine/git
+    commands:
+      - git clone --single-branch --branch $DRONE_SOURCE_BRANCH --depth=1 $DRONE_GIT_HTTP_URL .
+    when:
+      branch:
+        - main
+      event:
+        - push
+        - pull_request
+        - tag
+
+  - name: build
+    image: node:latest
+    commands:
+      - npm install
+      - npm run build
+    when:
+      branch:
+        - main
+      event:
+        - push
+        - pull_request
+        - tag
+
+  - name: publish-dev
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: paulwrubel/paul-wrubel-dev
+      tags:
+        - dev
+        - ${DRONE_COMMIT_SHA:0:8}
+    when:
+      branch:
+        - main
+      event:
+        - push
+
+  - name: publish
+    image: plugins/docker
+    settings:
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      repo: paulwrubel/paul-wrubel-dev
+      tags:
+        - latest
+        - ${DRONE_TAG##v}
+    when:
+      branch:
+        - main
+      event:
+        - tag
