@@ -12,6 +12,7 @@ const NEUTRAL = "#DDDDDD";
 const Theme = createTheme({
     spacing: 8,
     palette: {
+        mode: "dark",
         primary: {
             main: PRIMARY_MAIN,
             lighter: PRIMARY_LIGHTER,

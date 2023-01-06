@@ -1,9 +1,16 @@
-function App() {
+import { Helmet } from "react-helmet-async";
+
+import Router from "Router";
+
+const App = () => {
     return (
-        <div className="App">
-            <p>this is my website</p>
-        </div>
+        <>
+            <Helmet>
+                <title>Paul Wrubel</title>
+            </Helmet>
+            <Router />
+        </>
     );
-}
+};
 
 export default App;

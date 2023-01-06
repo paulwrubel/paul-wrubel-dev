@@ -1,10 +1,10 @@
 import React from "react";
 
 import "index.css";
-import { ThemeProvider } from "@mui/material";
+import { CssBaseline, ThemeProvider } from "@mui/material";
 
 import { createRoot } from "react-dom/client";
-import { Helmet, HelmetProvider } from "react-helmet-async";
+import { HelmetProvider } from "react-helmet-async";
 
 import reportWebVitals from "misc/reportWebVitals";
 import Theme from "Theme";
@@ -15,9 +15,7 @@ createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
         <ThemeProvider theme={Theme}>
             <HelmetProvider>
-                <Helmet>
-                    <title>Paul Wrubel</title>
-                </Helmet>
+                <CssBaseline />
                 <App />
             </HelmetProvider>
         </ThemeProvider>
