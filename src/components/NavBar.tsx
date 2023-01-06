@@ -1,13 +1,15 @@
 import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
-import { Link } from "react-router-dom";
+import { Link, useMatch } from "react-router-dom";
 
 const NavTab = ({
     to,
+    selected,
     children,
 }: {
     to: string;
+    selected?: boolean | null;
     children: React.ReactNode;
 }) => {
     const theme = useTheme();
@@ -19,15 +21,21 @@ const NavTab = ({
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                width: "96px",
-                height: "54px",
+                width: 126,
+                height: 50,
                 mx: "2px",
                 textDecoration: "none",
+                // fontFamily: '"Source Code Pro", monospace',
+                fontSize: "1.3rem",
                 color: "black",
                 boxSizing: "content-box",
-                borderBottom: `6px solid transparent`,
+                borderTop: selected
+                    ? `6px solid ${theme.palette.primary.main}`
+                    : "6px solid transparent",
+                borderBottom: "6px solid transparent",
+
                 ":hover": {
-                    borderBottom: `6px solid ${theme.palette.primary.light}`,
+                    borderBottom: `6px solid ${theme.palette.primary.main}`,
                     transition: "border-bottom-color 200ms ease-out",
                 },
             }}
@@ -44,21 +52,54 @@ const NavTab = ({
 };
 
 const NavBar = () => {
+    const match = useMatch(":view");
     return (
         <Box
             sx={{
                 display: "flex",
                 justifyContent: "center",
-                alignItems: "flex-start",
-                width: 1,
+                alignItems: "center",
+                width: "100vw",
                 height: 60,
+                px: 3,
                 backgroundColor: "white",
+                fontFamily: '"Source Code Pro", monospace',
+                position: "sticky",
+                top: 0,
+                // overflowX: "hidden",
             }}
         >
-            <NavTab to="/">Home</NavTab>
-            <NavTab to="/">About</NavTab>
-            <NavTab to="/">Projects</NavTab>
-            <NavTab to="/">Tools</NavTab>
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    flexGrow: "1",
+                    height: 1,
+                    p: 2,
+                }}
+            >
+                <Typography
+                    color="black"
+                    noWrap
+                    fontSize="1.6rem"
+                    fontWeight="200"
+                    fontFamily='"Source Code Pro", monospace'
+                >
+                    {"> paul wrubel"}
+                </Typography>
+            </Box>
+            <NavTab selected={!match} to="/">
+                {">home"}
+            </NavTab>
+            <NavTab selected={match?.pathname === "/about"} to="/about">
+                {">about"}
+            </NavTab>
+            <NavTab selected={match?.pathname === "/projects"} to="/projects">
+                {">projects"}
+            </NavTab>
+            <NavTab selected={match?.pathname === "/tools"} to="/tools">
+                {">tools"}
+            </NavTab>
         </Box>
     );
 };

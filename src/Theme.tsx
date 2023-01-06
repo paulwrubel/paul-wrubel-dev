@@ -5,9 +5,12 @@ const PRIMARY_MAIN = lightBlue[700];
 const PRIMARY_LIGHTER = lightBlue[300];
 const PRIMARY_LIGHTEST = lightBlue[100];
 
-const COMPLEMENTARY = "#d14a02";
+const SECONDARY = "#888";
 const TRIADIC = "#d10289";
 const NEUTRAL = "#DDDDDD";
+
+const BACKGROUND_DEFAULT = "#161616";
+const BACKGROUND_PAPER = "#111111";
 
 const Theme = createTheme({
     spacing: 8,
@@ -19,7 +22,11 @@ const Theme = createTheme({
             lightest: PRIMARY_LIGHTEST,
         },
         secondary: {
-            main: COMPLEMENTARY,
+            main: SECONDARY,
+        },
+        background: {
+            default: BACKGROUND_DEFAULT,
+            paper: BACKGROUND_PAPER,
         },
         triadic: {
             main: TRIADIC,
