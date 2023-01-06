@@ -71,7 +71,8 @@
                     "caseInsensitive": true
                 }
             }
-        ]
+        ],
+        "prettier/prettier": "error"
     },
     "settings": {
         "react": {
