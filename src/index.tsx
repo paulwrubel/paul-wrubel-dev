@@ -1,15 +1,26 @@
 import React from "react";
 
-import { createRoot } from "react-dom/client";
-
 import "index.css";
+import { ThemeProvider } from "@mui/material";
+
+import { createRoot } from "react-dom/client";
+import { Helmet, HelmetProvider } from "react-helmet-async";
+
 import reportWebVitals from "misc/reportWebVitals";
+import Theme from "Theme";
 
 import App from "./App";
 
 createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
-        <App />
+        <ThemeProvider theme={Theme}>
+            <HelmetProvider>
+                <Helmet>
+                    <title>Paul Wrubel</title>
+                </Helmet>
+                <App />
+            </HelmetProvider>
+        </ThemeProvider>
     </React.StrictMode>,
 );
 
