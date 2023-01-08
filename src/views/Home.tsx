@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { Container, Paper, Typography } from "@mui/material";
+import {
+    Box,
+    Container,
+    Link as MuiLink,
+    Paper,
+    Typography,
+} from "@mui/material";
+
+import { Link } from "react-router-dom";
 
 const commandSteps: { s: string; i: number }[] = [
     { s: ".", i: 500 },
@@ -21,11 +29,40 @@ const commandSteps: { s: string; i: number }[] = [
     { s: "v", i: 100 },
 ];
 
-const outputSteps: { s: string; i: number }[] = [
-    { s: "software engineer\n", i: 0 },
-    { s: "technology enthusiast\n", i: 1000 },
-    { s: "video gamer\n", i: 1000 },
-    { s: "cat appreciator\n", i: 1000 },
+const outputSteps: { n: React.ReactNode; i: number }[] = [
+    { n: "software engineer\n", i: 0 },
+    { n: "technology enthusiast\n", i: 1000 },
+    { n: "video gamer\n", i: 1000 },
+    { n: "cat appreciator\n", i: 1000 },
+    {
+        n: (
+            <span key="about-link">
+                {"> "}
+                <MuiLink href="/about">./learn-more</MuiLink>
+            </span>
+        ),
+        i: 1000,
+    },
+    {
+        n: (
+            <span key="projects-link">
+                <br />
+                {"> "}
+                <MuiLink href="/projects">./see-more</MuiLink>
+            </span>
+        ),
+        i: 1000,
+    },
+    {
+        n: (
+            <span key="tools-link">
+                <br />
+                {"> "}
+                <MuiLink href="/tools">./do-more</MuiLink>
+            </span>
+        ),
+        i: 1000,
+    },
 ];
 
 const Home = () => {
@@ -35,7 +72,7 @@ const Home = () => {
     const [commandString, setCommandString] = useState<string>("> ");
 
     const [outputIndex, setOutputIndex] = useState(0);
-    const [outputString, setOutputString] = useState<string>("");
+    const [outputNodes, setOutputNodes] = useState<React.ReactNode[]>([]);
 
     const [showCaret, setShowCaret] = useState(true);
     const [animFinished, setAnimFinished] = useState(false);
@@ -84,11 +121,11 @@ const Home = () => {
         if (enterPressed && outputIndex < outputSteps.length) {
             const nextStep = outputSteps[outputIndex];
             setTimeout(() => {
-                setOutputString(outputString + nextStep.s);
+                setOutputNodes([...outputNodes, nextStep.n]);
             }, nextStep.i);
             setOutputIndex(outputIndex + 1);
         }
-    }, [outputString, enterPressed]);
+    }, [outputNodes, enterPressed]);
 
     return (
         <Container sx={{ my: 10 }}>
@@ -111,11 +148,13 @@ const Home = () => {
             {enterPressed && (
                 <Paper variant="outlined" elevation={0} sx={{ p: 2, m: 2 }}>
                     <Typography
+                        component="div"
                         fontSize="3rem"
                         fontFamily='"Source Code Pro", monospace'
                         whiteSpace="pre-wrap"
                     >
-                        {outputString + (showCaret ? "_" : " ")}
+                        {outputNodes}
+                        {outputIndex < 6 && showCaret ? "_" : " "}
                     </Typography>
                 </Paper>
             )}
