@@ -50,47 +50,62 @@ const outputSteps: { n: React.ReactNode; i: number }[] = [
             <span key="tools-link">
                 <br />
                 {"> "}
-                <MuiLink href="/tools">./do-more</MuiLink>
+                <MuiLink href="/tools">./experience-more</MuiLink>
             </span>
         ),
         i: 1000,
     },
 ];
 
-const Home = () => {
-    const [enterPressed, setEnterPressed] = useState(false);
+const Home = ({
+    finishedAnim,
+    setFinishedAnim,
+}: {
+    finishedAnim: boolean;
+    setFinishedAnim: (arg1: boolean) => void;
+}) => {
+    const [enterPressed, setEnterPressed] = useState(finishedAnim);
 
     const [commandIndex, setCommandIndex] = useState(0);
-    const [commandString, setCommandString] = useState<string>("> ");
+    const [commandString, setCommandString] = useState<string>(
+        finishedAnim ? "> " + commandSteps.map((s) => s.s).join("") : "> ",
+    );
 
     const [outputIndex, setOutputIndex] = useState(0);
-    const [outputNodes, setOutputNodes] = useState<React.ReactNode[]>([]);
+    const [outputNodes, setOutputNodes] = useState<React.ReactNode[]>(
+        finishedAnim ? outputSteps.map((s) => s.n) : [],
+    );
 
     const [showCaret, setShowCaret] = useState(true);
-    const [animFinished, setAnimFinished] = useState(false);
+    const [commandAnimationFinished, setCommandAnimationFinished] =
+        useState(finishedAnim);
 
     useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (animFinished && e.key === "Enter") {
-                setEnterPressed(true);
-            }
-            document.removeEventListener("keydown", handleKeyDown);
-        };
-        document.addEventListener("keydown", handleKeyDown);
-        return () => {
-            document.removeEventListener("keydown", handleKeyDown);
-        };
+        if (!finishedAnim) {
+            const handleKeyDown = (e: KeyboardEvent) => {
+                if (commandAnimationFinished && e.key === "Enter") {
+                    setEnterPressed(true);
+                }
+                document.removeEventListener("keydown", handleKeyDown);
+            };
+            document.addEventListener("keydown", handleKeyDown);
+            return () => {
+                document.removeEventListener("keydown", handleKeyDown);
+            };
+        }
     });
 
     useEffect(() => {
-        setTimeout(
-            () => {
-                setAnimFinished(true);
-            },
-            commandSteps.reduce((acc, cur) => {
-                return acc + cur.i;
-            }, 100),
-        );
+        if (!finishedAnim) {
+            setTimeout(
+                () => {
+                    setCommandAnimationFinished(true);
+                },
+                commandSteps.reduce((acc, cur) => {
+                    return acc + cur.i;
+                }, 100),
+            );
+        }
     }, []);
 
     useEffect(() => {
@@ -100,7 +115,7 @@ const Home = () => {
     }, [showCaret]);
 
     useEffect(() => {
-        if (commandIndex < commandSteps.length) {
+        if (!finishedAnim && commandIndex < commandSteps.length) {
             const nextStep = commandSteps[commandIndex];
             setTimeout(() => {
                 setCommandString(commandString + nextStep.s);
@@ -110,7 +125,7 @@ const Home = () => {
     }, [commandString]);
 
     useEffect(() => {
-        if (enterPressed && outputIndex < outputSteps.length) {
+        if (!finishedAnim && enterPressed && outputIndex < outputSteps.length) {
             const nextStep = outputSteps[outputIndex];
             setTimeout(() => {
                 setOutputNodes([...outputNodes, nextStep.n]);
@@ -118,6 +133,19 @@ const Home = () => {
             setOutputIndex(outputIndex + 1);
         }
     }, [outputNodes, enterPressed]);
+
+    useEffect(() => {
+        if (!finishedAnim && enterPressed) {
+            setTimeout(
+                () => {
+                    setFinishedAnim(true);
+                },
+                outputSteps.reduce((acc, cur) => {
+                    return acc + cur.i;
+                }, 100),
+            );
+        }
+    }, [enterPressed]);
 
     return (
         <Container sx={{ my: 10 }}>
@@ -146,7 +174,9 @@ const Home = () => {
                         whiteSpace="pre-wrap"
                     >
                         {outputNodes}
-                        {outputIndex < 6 && showCaret ? "_" : " "}
+                        {!finishedAnim && outputIndex < 6 && showCaret
+                            ? "_"
+                            : " "}
                     </Typography>
                 </Paper>
             )}
