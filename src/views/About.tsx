@@ -3,11 +3,6 @@ import { Container, Link as MuiLink, Paper, Typography } from "@mui/material";
 const links: { name: string; url: string }[] = [
     { name: "github", url: "https://github.com/paulwrubel" },
     { name: "linkedin", url: "https://www.linkedin.com/in/pauljwrubel/" },
-    {
-        name: "spotify",
-        url: "https://open.spotify.com/artist/4W7CF8FyqGBBCmvwiq6M7Y",
-    },
-    { name: "steam", url: "https://steamcommunity.com/id/VoxaelFox/" },
 ];
 
 const ManSection = ({
