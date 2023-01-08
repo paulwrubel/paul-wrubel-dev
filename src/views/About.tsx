@@ -28,7 +28,8 @@ const ManSection = ({
                 {title.toUpperCase()}
             </Typography>
             <Typography
-                paragraph
+                gutterBottom
+                component="div"
                 variant="body1"
                 fontSize="1.3rem"
                 fontFamily='"Source Code Pro", monospace'
@@ -59,7 +60,7 @@ const ManSubsection = ({
                 {title}
             </Typography>
             <Typography
-                paragraph
+                gutterBottom
                 variant="body1"
                 fontSize="1.3rem"
                 fontFamily='"Source Code Pro", monospace'
@@ -103,7 +104,7 @@ const About = () => {
                     <br />
                     <br />
                     Outside of software, Paul enjoys playing video games,
-                    rollerblading, and baking.
+                    playing with his cats, rollerblading, and baking.
                 </ManSection>
                 <ManSection title="attributes">
                     All are listed in order of most to least experience.
@@ -123,12 +124,12 @@ const About = () => {
 
                 <ManSection title="see also">
                     {links.map(({ name, url }, i) => (
-                        <>
+                        <span key={name}>
                             <MuiLink href={url} fontWeight="bold">
                                 {name}
                             </MuiLink>
                             {i !== links.length - 1 ? ", " : ""}
-                        </>
+                        </span>
                     ))}
                 </ManSection>
             </Paper>
