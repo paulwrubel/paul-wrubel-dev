@@ -1,14 +1,6 @@
 import { useEffect, useState } from "react";
 
-import {
-    Box,
-    Container,
-    Link as MuiLink,
-    Paper,
-    Typography,
-} from "@mui/material";
-
-import { Link } from "react-router-dom";
+import { Container, Link as MuiLink, Paper, Typography } from "@mui/material";
 
 const commandSteps: { s: string; i: number }[] = [
     { s: ".", i: 500 },
