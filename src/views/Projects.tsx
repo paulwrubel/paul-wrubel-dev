@@ -143,12 +143,12 @@ const projectList: {
         codeLink: "https://github.com/paulwrubel/luminescence",
     },
     {
-        name: "hillbert curves",
-        description: `A simple project to demonstrate Hillbert Curves.`,
+        name: "hilbert curves",
+        description: `A simple project to demonstrate the Hilbert Curve.`,
         date: dayjs("2018-11-03", "YYYY-MM-DD"),
         technologies: ["javafx"],
         languages: ["scala"],
-        codeLink: "https://github.com/paulwrubel/hillbert-curves",
+        codeLink: "https://github.com/paulwrubel/hilbert-curves",
     },
     {
         name: "art generator s",
