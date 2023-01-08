@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { Route, Routes } from "react-router";
 import { BrowserRouter } from "react-router-dom";
 
@@ -9,13 +11,32 @@ import Projects from "views/Projects";
 import Tools from "views/Tools";
 
 const Router = () => {
+    const [finishedHomeAnim, setFinishedHomeAnim] = useState(false);
+    const [finishedProjectsAnim, setFinishedProjectsAnim] = useState(false);
+
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<Root />}>
-                    <Route index element={<Home />} />
+                    <Route
+                        index
+                        element={
+                            <Home
+                                finishedAnim={finishedHomeAnim}
+                                setFinishedAnim={setFinishedHomeAnim}
+                            />
+                        }
+                    />
                     <Route path="/about" element={<About />} />
-                    <Route path="/projects" element={<Projects />} />
+                    <Route
+                        path="/projects"
+                        element={
+                            <Projects
+                                finishedAnim={finishedProjectsAnim}
+                                setFinishedAnim={setFinishedProjectsAnim}
+                            />
+                        }
+                    />
                     <Route path="/tools" element={<Tools />} />
                     <Route path="*" element={<NotFound />} />
                 </Route>
