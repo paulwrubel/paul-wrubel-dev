@@ -8,7 +8,9 @@ import About from "views/About";
 import Home from "views/Home";
 import NotFound from "views/NotFound";
 import Projects from "views/Projects";
+import Tool from "views/Tool";
 import Tools from "views/Tools";
+import ToolsIndex from "views/ToolsIndex";
 
 const Router = () => {
     const [finishedHomeAnim, setFinishedHomeAnim] = useState(false);
@@ -37,7 +39,10 @@ const Router = () => {
                             />
                         }
                     />
-                    <Route path="/tools" element={<Tools />} />
+                    <Route path="/tools" element={<Tools />}>
+                        <Route index element={<ToolsIndex />} />
+                        <Route path=":tool" element={<Tool />} />
+                    </Route>
                     <Route path="*" element={<NotFound />} />
                 </Route>
             </Routes>
