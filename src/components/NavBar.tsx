@@ -52,7 +52,9 @@ const NavTab = ({
 };
 
 const NavBar = () => {
-    const match = useMatch(":view");
+    const match = useMatch("/*");
+    console.log(match);
+    const theme = useTheme();
     return (
         <Box
             sx={{
@@ -66,6 +68,7 @@ const NavBar = () => {
                 fontFamily: '"Source Code Pro", monospace',
                 position: "sticky",
                 top: 0,
+                zIndex: theme.zIndex.drawer + 1,
                 // overflowX: "hidden",
             }}
         >
@@ -88,7 +91,7 @@ const NavBar = () => {
                     {"> paul wrubel"}
                 </Typography>
             </Box>
-            <NavTab selected={!match} to="/">
+            <NavTab selected={match?.pathname === "/"} to="/">
                 {">home"}
             </NavTab>
             <NavTab selected={match?.pathname === "/about"} to="/about">
@@ -97,7 +100,7 @@ const NavBar = () => {
             <NavTab selected={match?.pathname === "/projects"} to="/projects">
                 {">projects"}
             </NavTab>
-            <NavTab selected={match?.pathname === "/tools"} to="/tools">
+            <NavTab selected={match?.pathname.startsWith("/tools")} to="/tools">
                 {">tools"}
             </NavTab>
         </Box>
