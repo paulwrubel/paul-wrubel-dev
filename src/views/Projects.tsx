@@ -11,6 +11,8 @@ import {
     Typography,
 } from "@mui/material";
 
+import { Helmet } from "react-helmet-async";
+
 import projectData, { Project as ProjectDataType } from "data/projects";
 
 const commandSteps: { s: string; i: number }[] = [
@@ -92,130 +94,147 @@ const Projects = ({
     }, [searchString]);
 
     return (
-        <Container sx={{ my: 10 }}>
-            <Paper variant="outlined" elevation={0} sx={{ p: 2, mx: 2, my: 4 }}>
+        <>
+            <Helmet>
+                <title>{"> projects | paul wrubel"}</title>
+            </Helmet>
+            <Container sx={{ my: 10 }}>
+                <Paper
+                    variant="outlined"
+                    elevation={0}
+                    sx={{ p: 2, mx: 2, my: 4 }}
+                >
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            height: "4rem",
+                        }}
+                    >
+                        <Typography
+                            flexShrink={0}
+                            noWrap
+                            variant="h1"
+                            fontSize="2rem"
+                            fontFamily='"Source Code Pro", monospace'
+                        >
+                            {"> cat projects" + commandAdditionalText}
+                        </Typography>
+                        {showSearchField && (
+                            <TextField
+                                size="small"
+                                fullWidth
+                                variant="outlined"
+                                value={searchString}
+                                onChange={(e) =>
+                                    setSearchString(e.target.value)
+                                }
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <Search />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{
+                                    ml: 2,
+                                    "& .MuiInputBase-input": {
+                                        fontSize: "2rem",
+                                        fontFamily:
+                                            '"Source Code Pro", monospace',
+                                    },
+                                }}
+                            />
+                        )}
+                    </Box>
+                </Paper>
+
                 <Box
                     sx={{
                         display: "flex",
-                        alignItems: "center",
-                        height: "4rem",
+                        flexDirection: "column",
                     }}
                 >
-                    <Typography
-                        flexShrink={0}
-                        noWrap
-                        variant="h1"
-                        fontSize="2rem"
-                        fontFamily='"Source Code Pro", monospace'
-                    >
-                        {"> cat projects" + commandAdditionalText}
-                    </Typography>
-                    {showSearchField && (
-                        <TextField
-                            size="small"
-                            fullWidth
-                            variant="outlined"
-                            value={searchString}
-                            onChange={(e) => setSearchString(e.target.value)}
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <Search />
-                                    </InputAdornment>
-                                ),
-                            }}
-                            sx={{
-                                ml: 2,
-                                "& .MuiInputBase-input": {
-                                    fontSize: "2rem",
-                                    fontFamily: '"Source Code Pro", monospace',
-                                },
-                            }}
-                        />
+                    {projectsList.map(
+                        ({
+                            name,
+                            description,
+                            date,
+                            technologies,
+                            languages,
+                            link,
+                            codeLink,
+                        }) => (
+                            <Paper
+                                key={name}
+                                variant="outlined"
+                                elevation={0}
+                                sx={{ p: 2, mx: 2, my: 1 }}
+                            >
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                    }}
+                                >
+                                    <Typography
+                                        fontSize="1.8rem"
+                                        fontWeight="bold"
+                                        fontFamily='"Source Code Pro", monospace'
+                                    >
+                                        {link ? (
+                                            <MuiLink href={link}>
+                                                {name}
+                                            </MuiLink>
+                                        ) : (
+                                            name
+                                        )}{" "}
+                                        |{" "}
+                                        <MuiLink href={codeLink}>
+                                            source
+                                        </MuiLink>
+                                    </Typography>
+                                    <Typography
+                                        fontSize="1.8rem"
+                                        fontWeight="bold"
+                                        fontFamily='"Source Code Pro", monospace'
+                                    >
+                                        {date.format("MMM, YYYY")}
+                                    </Typography>
+                                </Box>
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        mb: 2,
+                                    }}
+                                >
+                                    <Typography
+                                        fontSize="1.5rem"
+                                        fontFamily='"Source Code Pro", monospace'
+                                    >
+                                        {languages.join(", ")}
+                                    </Typography>
+                                    <Typography
+                                        fontSize="1.5rem"
+                                        fontFamily='"Source Code Pro", monospace'
+                                    >
+                                        {technologies.join(", ")}
+                                    </Typography>
+                                </Box>
+                                <Typography
+                                    fontSize="1.3rem"
+                                    fontFamily='"Source Code Pro", monospace'
+                                    sx={{ pl: "10%" }}
+                                >
+                                    {description}
+                                </Typography>
+                            </Paper>
+                        ),
                     )}
                 </Box>
-            </Paper>
-
-            <Box
-                sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                }}
-            >
-                {projectsList.map(
-                    ({
-                        name,
-                        description,
-                        date,
-                        technologies,
-                        languages,
-                        link,
-                        codeLink,
-                    }) => (
-                        <Paper
-                            key={name}
-                            variant="outlined"
-                            elevation={0}
-                            sx={{ p: 2, mx: 2, my: 1 }}
-                        >
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                }}
-                            >
-                                <Typography
-                                    fontSize="1.8rem"
-                                    fontWeight="bold"
-                                    fontFamily='"Source Code Pro", monospace'
-                                >
-                                    {link ? (
-                                        <MuiLink href={link}>{name}</MuiLink>
-                                    ) : (
-                                        name
-                                    )}{" "}
-                                    | <MuiLink href={codeLink}>source</MuiLink>
-                                </Typography>
-                                <Typography
-                                    fontSize="1.8rem"
-                                    fontWeight="bold"
-                                    fontFamily='"Source Code Pro", monospace'
-                                >
-                                    {date.format("MMM, YYYY")}
-                                </Typography>
-                            </Box>
-                            <Box
-                                sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    mb: 2,
-                                }}
-                            >
-                                <Typography
-                                    fontSize="1.5rem"
-                                    fontFamily='"Source Code Pro", monospace'
-                                >
-                                    {languages.join(", ")}
-                                </Typography>
-                                <Typography
-                                    fontSize="1.5rem"
-                                    fontFamily='"Source Code Pro", monospace'
-                                >
-                                    {technologies.join(", ")}
-                                </Typography>
-                            </Box>
-                            <Typography
-                                fontSize="1.3rem"
-                                fontFamily='"Source Code Pro", monospace'
-                                sx={{ pl: "10%" }}
-                            >
-                                {description}
-                            </Typography>
-                        </Paper>
-                    ),
-                )}
-            </Box>
-        </Container>
+            </Container>
+        </>
     );
 };
 

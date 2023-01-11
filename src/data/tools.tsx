@@ -1,3 +1,4 @@
+import MergeMania from "components/tools/MergeMania";
 import TrafficSim from "components/tools/TrafficSim";
 
 type Tool = {
@@ -12,6 +13,11 @@ const tools: Tool[] = [
         description:
             'a basic 2d traffic simulator. this is a different project than the "traffic-sim" listed under projects.',
         component: <TrafficSim />,
+    },
+    {
+        name: "merge-mania",
+        description: "a merge game.",
+        component: <MergeMania />,
     },
 ];
 

@@ -3,7 +3,7 @@ import { useTheme } from "@mui/material/styles";
 
 import { Link, Outlet, useMatch } from "react-router-dom";
 
-import toolList from "data/tools";
+import allTools from "data/tools";
 
 const Tools = () => {
     const theme = useTheme();
@@ -11,6 +11,10 @@ const Tools = () => {
     const drawerWidth = 400;
 
     const selectedToolName = useMatch("/tools/:tool")?.params?.tool;
+
+    const toolList = allTools
+        .slice()
+        .sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
 
     return (
         <Box sx={{ display: "flex" }}>
