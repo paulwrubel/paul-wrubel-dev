@@ -27,7 +27,7 @@ const Tool = () => {
                         justifyContent: "space-between",
                     }}
                 >
-                    {tool.component}
+                    <Box sx={{ alignSelf: "center" }}>{tool.component}</Box>
                     <Box
                         sx={{
                             display: "flex",
