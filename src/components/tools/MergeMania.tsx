@@ -87,6 +87,7 @@ const tryCheckMergeSingleStep = (
     p5: p5Types,
     activeColumn: number,
 ): boolean => {
+    console.log(activeColumn);
     let willMerge = false;
     for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
         for (let index = 0; index < rowCount; index++) {
