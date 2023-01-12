@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 import { Container, Link as MuiLink, Paper, Typography } from "@mui/material";
 
+import { Helmet } from "react-helmet-async";
+
 const commandSteps: { s: string; i: number }[] = [
     { s: ".", i: 500 },
     { s: "/", i: 200 },
@@ -148,39 +150,45 @@ const Home = ({
     }, [enterPressed]);
 
     return (
-        <Container sx={{ my: 10 }}>
-            <Paper
-                variant="outlined"
-                elevation={0}
-                sx={{
-                    p: 2,
-                    m: 2,
-                }}
-            >
-                <Typography
-                    // align="left"
-                    fontSize="4rem"
-                    fontFamily='"Source Code Pro", monospace'
+        <>
+            <Helmet>
+                <title>{"> paul wrubel"}</title>
+            </Helmet>
+            <Container sx={{ my: 10 }}>
+                <Paper
+                    variant="outlined"
+                    elevation={0}
+                    sx={{
+                        p: 2,
+                        m: 2,
+                    }}
                 >
-                    {commandString + (showCaret && !enterPressed ? "_" : "")}
-                </Typography>
-            </Paper>
-            {enterPressed && (
-                <Paper variant="outlined" elevation={0} sx={{ p: 2, m: 2 }}>
                     <Typography
-                        component="div"
-                        fontSize="3rem"
+                        // align="left"
+                        fontSize="4rem"
                         fontFamily='"Source Code Pro", monospace'
-                        whiteSpace="pre-wrap"
                     >
-                        {outputNodes}
-                        {!finishedAnim && outputIndex < 6 && showCaret
-                            ? "_"
-                            : " "}
+                        {commandString +
+                            (showCaret && !enterPressed ? "_" : "")}
                     </Typography>
                 </Paper>
-            )}
-        </Container>
+                {enterPressed && (
+                    <Paper variant="outlined" elevation={0} sx={{ p: 2, m: 2 }}>
+                        <Typography
+                            component="div"
+                            fontSize="3rem"
+                            fontFamily='"Source Code Pro", monospace'
+                            whiteSpace="pre-wrap"
+                        >
+                            {outputNodes}
+                            {!finishedAnim && outputIndex < 6 && showCaret
+                                ? "_"
+                                : " "}
+                        </Typography>
+                    </Paper>
+                )}
+            </Container>
+        </>
     );
 };
 

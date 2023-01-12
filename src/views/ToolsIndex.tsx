@@ -1,24 +1,31 @@
 import { Container, Paper, Typography } from "@mui/material";
 
+import { Helmet } from "react-helmet-async";
+
 const ToolsIndex = () => {
     return (
-        <Container sx={{ my: 10, flexGrow: 1 }}>
-            <Paper
-                variant="outlined"
-                elevation={0}
-                sx={{
-                    p: 2,
-                    m: 2,
-                }}
-            >
-                <Typography
-                    fontSize="3rem"
-                    fontFamily='"Source Code Pro", monospace'
+        <>
+            <Helmet>
+                <title>{"> tools | paul wrubel"}</title>
+            </Helmet>
+            <Container sx={{ my: 10, flexGrow: 1 }}>
+                <Paper
+                    variant="outlined"
+                    elevation={0}
+                    sx={{
+                        p: 2,
+                        m: 2,
+                    }}
                 >
-                    select a tool from the right
-                </Typography>
-            </Paper>
-        </Container>
+                    <Typography
+                        fontSize="3rem"
+                        fontFamily='"Source Code Pro", monospace'
+                    >
+                        select a tool from the right
+                    </Typography>
+                </Paper>
+            </Container>
+        </>
     );
 };
 

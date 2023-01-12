@@ -1,5 +1,6 @@
 import { Box, Container, Paper, Typography } from "@mui/material";
 
+import { Helmet } from "react-helmet-async";
 import { useParams } from "react-router-dom";
 
 import toolList from "data/tools";
@@ -13,59 +14,64 @@ const Tool = () => {
     };
 
     return (
-        <Container sx={{ my: 10, height: "78vh" }}>
-            <Box
-                sx={{
-                    height: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                }}
-            >
-                {tool.component}
+        <>
+            <Helmet>
+                <title>{`> ${tool.name} | paul wrubel`}</title>
+            </Helmet>
+            <Container sx={{ my: 10, height: "78vh" }}>
                 <Box
                     sx={{
+                        height: 1,
                         display: "flex",
                         flexDirection: "column",
-                        gap: 2,
-                        py: 2,
+                        justifyContent: "space-between",
                     }}
                 >
-                    <Paper
-                        variant="outlined"
-                        elevation={0}
+                    {tool.component}
+                    <Box
                         sx={{
-                            p: 2,
-                            mx: 2,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 2,
+                            py: 2,
                         }}
                     >
-                        <Typography
-                            // align="left"
-                            fontSize="2.5rem"
-                            fontFamily='"Source Code Pro", monospace'
+                        <Paper
+                            variant="outlined"
+                            elevation={0}
+                            sx={{
+                                p: 2,
+                                mx: 2,
+                            }}
                         >
-                            {tool.name}
-                        </Typography>
-                    </Paper>
-                    <Paper
-                        variant="outlined"
-                        elevation={0}
-                        sx={{
-                            p: 2,
-                            mx: 2,
-                        }}
-                    >
-                        <Typography
-                            // align="left"
-                            fontSize="1rem"
-                            fontFamily='"Source Code Pro", monospace'
+                            <Typography
+                                // align="left"
+                                fontSize="2.5rem"
+                                fontFamily='"Source Code Pro", monospace'
+                            >
+                                {tool.name}
+                            </Typography>
+                        </Paper>
+                        <Paper
+                            variant="outlined"
+                            elevation={0}
+                            sx={{
+                                p: 2,
+                                mx: 2,
+                            }}
                         >
-                            {tool.description}
-                        </Typography>
-                    </Paper>
+                            <Typography
+                                // align="left"
+                                fontSize="1rem"
+                                fontFamily='"Source Code Pro", monospace'
+                            >
+                                {tool.description}
+                            </Typography>
+                        </Paper>
+                    </Box>
                 </Box>
-            </Box>
-        </Container>
+            </Container>
+        </>
     );
 };
 
