@@ -36,7 +36,7 @@ const PowerBlock = ({ power, size }: { power: number; size: number }) => {
 
                 userSelect: "none",
                 fontSize: "3rem",
-                fontWeight: "200",
+                // fontWeight: "200",
                 fontFamily: '"Source Code Pro", monospace',
             }}
         >

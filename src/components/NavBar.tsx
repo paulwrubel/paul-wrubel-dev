@@ -53,7 +53,6 @@ const NavTab = ({
 
 const NavBar = () => {
     const match = useMatch("/*");
-    console.log(match);
     const theme = useTheme();
     return (
         <Box
