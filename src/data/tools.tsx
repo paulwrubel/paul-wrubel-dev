@@ -1,4 +1,5 @@
-import MergeMania from "components/tools/MergeMania";
+import MergeManiaProto from "components/tools/MergeManiaProto";
+import MergeManiaS from "components/tools/MergeManiaS";
 import TrafficSim from "components/tools/TrafficSim";
 
 type Tool = {
@@ -15,9 +16,14 @@ const tools: Tool[] = [
         component: <TrafficSim />,
     },
     {
-        name: "merge-mania",
-        description: "a merge game.",
-        component: <MergeMania />,
+        name: "merge-mania-proto",
+        description: "a prototype merge game, built completely in react.",
+        component: <MergeManiaProto />,
+    },
+    {
+        name: "merge-mania-s",
+        description: "a merge game, built in p5.js. It's better this time!",
+        component: <MergeManiaS />,
     },
 ];
 

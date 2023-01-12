@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Box } from "@mui/material";
 
@@ -45,7 +45,7 @@ const PowerBlock = ({ power, size }: { power: number; size: number }) => {
     );
 };
 
-const MergeMania = () => {
+const MergeManiaProto = () => {
     const columns = 5;
     const rows = 6;
     const blockSize = 100;
@@ -137,7 +137,46 @@ const MergeMania = () => {
 
     const tryCollapseAll = (): boolean => {
         // TODO: collapses occur sideways as well!
-        return false;
+        const columnPowersCopy = columnPowers.slice().map((c) => c.slice());
+        let didCollapse = false;
+        for (let ci = 0; ci < columnPowersCopy.length; ci++) {
+            const column = columnPowersCopy[ci];
+            for (let i = 0; i < column.length; i++) {
+                const matchesAbove =
+                    i < column.length - 1 && column[i] === column[i + 1];
+                const matchesRight =
+                    ci < columnPowersCopy.length - 1 &&
+                    columnPowersCopy[ci + 1].length > i &&
+                    column[i] === columnPowersCopy[ci + 1][i];
+                if (matchesAbove) {
+                    columnPowersCopy[ci].splice(i, 2, column[i] + 1);
+                    didCollapse = true;
+                    console.log("matches above!");
+                }
+                if (matchesRight) {
+                    columnPowersCopy[ci].splice(i, 1, column[i] + 1);
+                    columnPowersCopy[ci + 1].splice(i, 1);
+                    didCollapse = true;
+                    console.log("matches right!");
+                }
+            }
+        }
+        if (didCollapse) {
+            console.log(columnPowersCopy);
+            setColumnPowers(columnPowersCopy);
+        }
+        return didCollapse;
+    };
+
+    const getMaxPowerActive = (): number => {
+        return columnPowers.reduce(
+            (acc, column) =>
+                Math.max(
+                    acc,
+                    column.reduce((acc2, p) => Math.max(acc2, p), 0),
+                ),
+            0,
+        );
     };
 
     useEffect(() => {
@@ -155,6 +194,9 @@ const MergeMania = () => {
             //     collapseColumnStep(ci);
             // });
             if (didCollapse) {
+                const newMinPower = Math.max(getMaxPowerActive() - 5, 0);
+                console.log("setting min power to " + newMinPower);
+                setMinimumPower(newMinPower);
                 setAnimating(true);
             }
             // collapseColumn(0);
@@ -277,4 +319,4 @@ const MergeMania = () => {
     );
 };
 
-export default MergeMania;
+export default MergeManiaProto;
