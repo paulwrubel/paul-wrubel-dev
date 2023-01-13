@@ -7,13 +7,19 @@ import seedrandom from "seedrandom";
 
 type AnimSubject = {
     power: number;
-    startPos: { x: number; y: number };
-    endPos: { x: number; y: number };
+    startPos: number[];
+    endPos: number[];
+};
+
+type AnimGridSubject = {
+    power: number;
+    startGridPos: number[];
+    endGridPos: number[];
 };
 
 type Animation = {
     id: string;
-    subject: AnimSubject;
+    subjects: AnimSubject[];
     startTime: number;
     endTime: number;
     curveFunc: Bezier.EasingFunction;
@@ -24,15 +30,28 @@ type Animation = {
  * Constants
  */
 
+// blocks
 const blockSize = 100;
 const padding = 5;
 const roundingRadius = 12;
 
+// columns
 const columnCount = 5;
 const rowCount = 6;
 
+// canvas
 const width = blockSize * columnCount + padding * (columnCount + 1);
 const height = blockSize * (rowCount + 1) + padding * (rowCount + 3);
+
+// animations
+const newBlockAnimationDurationMillis = 150;
+const newBlockAnimationCurveFunction = Bezier(0.6, 1, 0, 1);
+
+const mergeAnimationDurationMillis = 300;
+const mergeAnimationCurveFunction = Bezier(0.6, 1, 0, 1);
+
+const collapseAnimationDurationMillis = 300;
+const collapseAnimationCurveFunction = Bezier(0.6, 1, 0, 1);
 
 /**
  * Variables
@@ -76,76 +95,276 @@ const addPowerToColumn = (columnIndex: number, power: number) => {
     }
 };
 
-const actualCoordinatesFromGrid = (x: number, y: number): number[] => {
+const actualCoordinatesFromGrid = ([x, y]: number[]): number[] => {
     return [
         padding + padding * x + blockSize * x,
         height - (padding * (y + 1) + blockSize * (y + 1)),
     ];
 };
 
-const tryCheckMergeSingleStep = (
+const addBlockAnimation = (
     p5: p5Types,
-    activeColumn: number,
-): boolean => {
-    console.log(activeColumn);
-    let willMerge = false;
+    subjects: AnimGridSubject[],
+    durationMillis: number,
+    curveFunc: Bezier.EasingFunction,
+    onFinish: () => void,
+) => {
+    const trueSubjects: AnimSubject[] = subjects.map((subject) => {
+        return {
+            power: subject.power,
+            startPos: actualCoordinatesFromGrid(subject.startGridPos),
+            endPos: actualCoordinatesFromGrid(subject.endGridPos),
+        };
+    });
+
+    const animID = `from-${subjects
+        .map((s) => s.startGridPos)
+        .join(":")}-to-${subjects.map((s) => s.endGridPos).join(":")}`;
+
+    runningAnimations.push({
+        id: animID,
+        subjects: trueSubjects,
+        startTime: p5.frameCount,
+        endTime: p5.frameCount + (durationMillis / 1000) * p5.frameRate(),
+        curveFunc: curveFunc,
+        onFinish: () => {
+            runningAnimations = runningAnimations.filter(
+                (a) => a.id !== animID,
+            );
+            onFinish();
+        },
+    });
+};
+
+const tryCheckCollapse = (p5: p5Types, activeColumn: number) => {
+    let didCollapse = false;
     for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+        const column = columnPowers[columnIndex];
         for (let index = 0; index < rowCount; index++) {
-            const column = columnPowers[columnIndex];
-            // check for vertical merging
-            if (
-                index < rowCount - 1 &&
-                column[index] == column[index + 1] &&
-                column[index] !== -1
-            ) {
-                // do vertical merge
-                const currentPower = column[index];
-                willMerge = true;
-                const [actualStartX, actualStartY] = actualCoordinatesFromGrid(
-                    columnIndex,
-                    index + 1,
+            if (column[index] === -1) {
+                // there's no block at this position!
+                // find the position of the next block above this one
+                const nextBlockIndex = column.findIndex(
+                    (p, i) => i > index && p !== -1,
                 );
-                const [actualEndX, actualEndY] = actualCoordinatesFromGrid(
-                    columnIndex,
-                    index,
-                );
+                if (nextBlockIndex !== -1) {
+                    // we have a block and a place to move it
+                    console.log(
+                        `starting collapse anim on col ${columnIndex} from ${nextBlockIndex} to ${index}`,
+                    );
+                    didCollapse = true;
+                    animLock = true;
 
-                const animID = `from-${columnIndex},${
-                    index + 1
-                }-to-${columnIndex},${index}`;
-                const durationMillis = 300;
+                    const newPower = column[nextBlockIndex];
+                    const fromGrid = [columnIndex, nextBlockIndex];
+                    const toGrid = [columnIndex, index];
 
-                runningAnimations.push({
-                    id: animID,
-                    subject: {
-                        power: currentPower + 1,
-                        startPos: { x: actualStartX, y: actualStartY },
-                        endPos: { x: actualEndX, y: actualEndY },
-                    },
-                    startTime: p5.frameCount,
-                    endTime:
-                        p5.frameCount +
-                        (durationMillis / 1000) * p5.frameRate(),
-                    curveFunc: Bezier(0.6, 1, 0, 1),
-                    onFinish: () => {
-                        // addPowerToColumn(columnIndex, 0);
-                        columnPowers[columnIndex][index] = currentPower + 1;
-                        runningAnimations = runningAnimations.filter(
-                            (a) => a.id !== animID,
-                        );
-                        const willMerge = tryCheckMergeSingleStep(
-                            p5,
-                            columnIndex,
-                        );
-                        animLock = willMerge;
-                    },
-                });
-                columnPowers[columnIndex][index] = -1;
-                columnPowers[columnIndex][index + 1] = -1;
+                    addBlockAnimation(
+                        p5,
+                        [
+                            {
+                                power: newPower,
+                                startGridPos: fromGrid,
+                                endGridPos: toGrid,
+                            },
+                        ],
+                        collapseAnimationDurationMillis,
+                        collapseAnimationCurveFunction,
+                        () => {
+                            columnPowers[columnIndex][index] = newPower;
+                            animLock = false;
+                            tryCheckMergeSingleStep(p5, columnIndex);
+                        },
+                    );
+
+                    // post add procedure
+                    columnPowers[columnIndex][nextBlockIndex] = -1;
+                }
             }
         }
     }
-    return willMerge;
+    if (!didCollapse) {
+        tryCheckMergeSingleStep(p5, activeColumn);
+    }
+};
+
+const areAdjacent = (p1: number[], p2: number[]): boolean => {
+    return (
+        (Math.abs(p1[0] - p2[0]) === 1 && Math.abs(p1[1] - p2[1]) === 0) ||
+        (Math.abs(p1[0] - p2[0]) === 0 && Math.abs(p1[1] - p2[1]) === 1)
+    );
+};
+
+const getCenterOfMergeGroup = (
+    group: number[][],
+    activeColumn: number,
+): number[] => {
+    if (group.length === 2) {
+        if (group[0][0] === group[1][0]) {
+            // same x coordinate, so these are vertically stacked
+            // we should return the one on bottom
+            return group[0][1] < group[1][1] ? group[0] : group[1];
+        } else {
+            // these must be horizontal
+            // we should return the one closest to the active column
+            return Math.abs(group[0][0] - activeColumn) <
+                Math.abs(group[1][0] - activeColumn)
+                ? group[0]
+                : group[1];
+        }
+    }
+
+    // for a group size of > 3, it will be sufficient to find the
+    // locations that borders the most other group members
+    let maxAdjacentCount = 0;
+    const maxAdjacentIndex = group.reduce((acc, loc1, index) => {
+        // find how many other group members this location is adjecent to
+        const adjacentCount = group.reduce((acc, loc2) => {
+            if (areAdjacent(loc1, loc2)) {
+                // add an additional neighbor to the running count
+                return acc + 1;
+            }
+            // no neighbor between loc1 and loc2, so same count
+            return acc;
+        }, 0);
+        // if we found a new winner...
+        if (adjacentCount > maxAdjacentCount) {
+            // increase the count
+            maxAdjacentCount = adjacentCount;
+            // and save our index as the current "king"
+            return index;
+        }
+        return acc;
+    }, 0);
+
+    return group[maxAdjacentIndex];
+};
+
+// eslint-disable-next-line sonarjs/cognitive-complexity
+const findMergeGroups = () => {
+    const mergeGroups: number[][][] = [];
+    for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+        const column = columnPowers[columnIndex];
+        for (let index = 0; index < rowCount; index++) {
+            const thisPower = column[index];
+
+            // if this spot is empty, move on
+            if (thisPower === -1) {
+                continue;
+            }
+
+            // helper function
+            // check if this location is in some group already
+            // and return that group's index if it is
+            const checkAndAddToGroup = (current: number[], match: number[]) => {
+                const currentGroupIndex = mergeGroups.findIndex((group) =>
+                    group.some(
+                        (loc) => loc[0] === current[0] && loc[1] === current[1],
+                    ),
+                );
+                const matchGroupIndex = mergeGroups.findIndex((group) =>
+                    group.some(
+                        (loc) => loc[0] === match[0] && loc[1] === match[1],
+                    ),
+                );
+                if (currentGroupIndex === -1 && matchGroupIndex !== -1) {
+                    // match is in a group, so add current to that group
+                    mergeGroups[matchGroupIndex].push(current);
+                } else if (currentGroupIndex !== -1 && matchGroupIndex === -1) {
+                    // current is in a group, so add match to that group
+                    mergeGroups[currentGroupIndex].push(match);
+                } else if (currentGroupIndex === -1 && matchGroupIndex === -1) {
+                    // neither are in any group, so add a new group with both of them
+                    mergeGroups.push([current, match]);
+                }
+            };
+
+            // check north
+            if (index < rowCount - 1 && column[index + 1] === thisPower) {
+                checkAndAddToGroup(
+                    [columnIndex, index],
+                    [columnIndex, index + 1],
+                );
+            }
+
+            // check east
+            if (
+                columnIndex < columnCount - 1 &&
+                columnPowers[columnIndex + 1][index] === thisPower
+            ) {
+                checkAndAddToGroup(
+                    [columnIndex, index],
+                    [columnIndex + 1, index],
+                );
+            }
+
+            // check south
+            if (index > 0 && column[index - 1] === thisPower) {
+                checkAndAddToGroup(
+                    [columnIndex, index],
+                    [columnIndex, index - 1],
+                );
+            }
+
+            // check west
+            if (
+                columnIndex > 0 &&
+                columnPowers[columnIndex - 1][index] === thisPower
+            ) {
+                checkAndAddToGroup(
+                    [columnIndex, index],
+                    [columnIndex - 1, index],
+                );
+            }
+        }
+    }
+    return mergeGroups;
+};
+
+const tryCheckMergeSingleStep = (p5: p5Types, activeColumn: number) => {
+    // console.log("checking merge status, table follows");
+    // console.table(columnPowers);
+    const mergeGroups: number[][][] = findMergeGroups();
+
+    if (mergeGroups.length > 0) {
+        animLock = true;
+    }
+
+    for (let groupIndex = 0; groupIndex < mergeGroups.length; groupIndex++) {
+        const group = mergeGroups[groupIndex];
+        const groupCenter = getCenterOfMergeGroup(group, activeColumn);
+        const newPower =
+            columnPowers[groupCenter[0]][groupCenter[1]] + group.length - 1;
+
+        // assemble subjects
+        const subjects: AnimGridSubject[] = [];
+        for (let index = 0; index < group.length; index++) {
+            const loc = group[index];
+            if (loc[0] === groupCenter[0] && loc[1] === groupCenter[1]) {
+                // we are the group center!
+                continue;
+            }
+            subjects.push({
+                power: newPower,
+                startGridPos: loc,
+                endGridPos: groupCenter,
+            });
+            columnPowers[loc[0]][loc[1]] = -1;
+        }
+
+        // add animation
+        addBlockAnimation(
+            p5,
+            subjects,
+            mergeAnimationDurationMillis,
+            mergeAnimationCurveFunction,
+            () => {
+                columnPowers[groupCenter[0]][groupCenter[1]] = newPower;
+                animLock = false;
+                tryCheckCollapse(p5, groupCenter[0]);
+            },
+        );
+    }
 };
 
 const MergeMania = () => {
@@ -188,7 +407,6 @@ const MergeMania = () => {
             p5.textAlign(p5.CENTER, p5.CENTER);
             p5.textSize(48);
             p5.textFont('"Source Code Pro", monospace');
-            // console.log(blockSize);
             p5.text(`${2 ** power}`, x + blockSize / 2, y + blockSize / 2);
         }
     };
@@ -199,7 +417,7 @@ const MergeMania = () => {
         y: number,
         power: number,
     ) => {
-        const [actualX, actualY] = actualCoordinatesFromGrid(x, y);
+        const [actualX, actualY] = actualCoordinatesFromGrid([x, y]);
         drawPowerBlock(p5, actualX, actualY, power);
     };
 
@@ -213,43 +431,27 @@ const MergeMania = () => {
                 animLock = true;
                 const endGridPosY = getNextOpenIndexInColumn(columnIndex);
 
-                const [actualStartX, actualStartY] = actualCoordinatesFromGrid(
-                    columnIndex,
-                    5,
-                );
-                const [actualEndX, actualEndY] = actualCoordinatesFromGrid(
-                    columnIndex,
-                    endGridPosY,
-                );
+                const newPower = 0;
+                const fromGrid = [columnIndex, 5];
+                const toGrid = [columnIndex, endGridPosY];
 
-                const animID = `from-${columnIndex},${5}-to-${columnIndex},${endGridPosY}`;
-                const durationMillis = 150;
-
-                runningAnimations.push({
-                    id: animID,
-                    subject: {
-                        power: 0,
-                        startPos: { x: actualStartX, y: actualStartY },
-                        endPos: { x: actualEndX, y: actualEndY },
-                    },
-                    startTime: p5.frameCount,
-                    endTime:
-                        p5.frameCount +
-                        (durationMillis / 1000) * p5.frameRate(),
-                    curveFunc: Bezier(0.6, 1, 0, 1),
-                    onFinish: () => {
+                addBlockAnimation(
+                    p5,
+                    [
+                        {
+                            power: newPower,
+                            startGridPos: fromGrid,
+                            endGridPos: toGrid,
+                        },
+                    ],
+                    newBlockAnimationDurationMillis,
+                    newBlockAnimationCurveFunction,
+                    () => {
                         addPowerToColumn(columnIndex, 0);
-                        runningAnimations = runningAnimations.filter(
-                            (a) => a.id !== animID,
-                        );
-                        const willMerge = tryCheckMergeSingleStep(
-                            p5,
-                            columnIndex,
-                        );
-                        animLock = willMerge;
+                        animLock = false;
+                        tryCheckMergeSingleStep(p5, columnIndex);
                     },
-                });
-                // latestAddTime = p5.frameCount;
+                );
                 console.log("clicked on " + columnIndex);
             }
         }
@@ -261,9 +463,6 @@ const MergeMania = () => {
     };
 
     const draw = (p5: p5Types) => {
-        // clear the canvas for redraw
-        p5.clear();
-
         // set the background color to black
         p5.background(p5.color("#000"));
 
@@ -284,8 +483,7 @@ const MergeMania = () => {
             );
         }
 
-        // draw the power blocks
-
+        // draw power blocks
         for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
             for (let index = 0; index < rowCount; index++) {
                 drawPowerBlockAtGridLocation(
@@ -296,6 +494,8 @@ const MergeMania = () => {
                 );
             }
         }
+
+        // draw running animations
         runningAnimations.forEach((animation) => {
             const time = p5.map(
                 p5.frameCount,
@@ -306,22 +506,23 @@ const MergeMania = () => {
                 true,
             );
             const progression = animation.curveFunc(time);
-            const x = p5.map(
-                progression,
-                0,
-                1,
-                animation.subject.startPos.x,
-                animation.subject.endPos.x,
-            );
-            const y = p5.map(
-                progression,
-                0,
-                1,
-                animation.subject.startPos.y,
-                animation.subject.endPos.y,
-            );
-
-            drawPowerBlock(p5, x, y, animation.subject.power);
+            animation.subjects.forEach((subject) => {
+                const x = p5.map(
+                    progression,
+                    0,
+                    1,
+                    subject.startPos[0],
+                    subject.endPos[0],
+                );
+                const y = p5.map(
+                    progression,
+                    0,
+                    1,
+                    subject.startPos[1],
+                    subject.endPos[1],
+                );
+                drawPowerBlock(p5, x, y, subject.power);
+            });
 
             if (p5.frameCount >= animation.endTime) {
                 animation.onFinish?.();
