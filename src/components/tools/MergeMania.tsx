@@ -44,14 +44,14 @@ const width = blockSize * columnCount + padding * (columnCount + 1);
 const height = blockSize * (rowCount + 1) + padding * (rowCount + 3);
 
 // animations
-const newBlockAnimationDurationMillis = 150;
+const newBlockAnimationDurationMillis = 200;
 const newBlockAnimationCurveFunction = Bezier(0.6, 1, 0, 1);
 
 const mergeAnimationDurationMillis = 300;
-const mergeAnimationCurveFunction = Bezier(0.6, 1, 0, 1);
+const mergeAnimationCurveFunction = Bezier(0.2, 0, 0, 1);
 
 const collapseAnimationDurationMillis = 300;
-const collapseAnimationCurveFunction = Bezier(0.6, 1, 0, 1);
+const collapseAnimationCurveFunction = Bezier(0.4, 1, 0, 1);
 
 /**
  * Variables
@@ -62,6 +62,8 @@ const columnPowers: number[][] = [...Array(columnCount).keys()].map(() =>
 );
 let runningAnimations: Animation[] = [];
 let animLock = false;
+let minimumPower = 0;
+let powerProgression = [0, 0];
 
 const randRangeInt = (
     min: number,
@@ -92,7 +94,22 @@ const addPowerToColumn = (columnIndex: number, power: number) => {
     const index = getNextOpenIndexInColumn(columnIndex);
     if (index !== -1) {
         columnPowers[columnIndex][index] = power;
+        powerProgression = [
+            ...powerProgression.slice(1),
+            minimumPower + randRangeInt(0, 2),
+        ];
     }
+};
+
+const getMaxPowerActive = (): number => {
+    return columnPowers.reduce(
+        (acc, column) =>
+            Math.max(
+                acc,
+                column.reduce((acc2, p) => Math.max(acc2, p), 0),
+            ),
+        0,
+    );
 };
 
 const actualCoordinatesFromGrid = ([x, y]: number[]): number[] => {
@@ -149,9 +166,6 @@ const tryCheckCollapse = (p5: p5Types, activeColumn: number) => {
                 );
                 if (nextBlockIndex !== -1) {
                     // we have a block and a place to move it
-                    console.log(
-                        `starting collapse anim on col ${columnIndex} from ${nextBlockIndex} to ${index}`,
-                    );
                     didCollapse = true;
                     animLock = true;
 
@@ -326,8 +340,32 @@ const tryCheckMergeSingleStep = (p5: p5Types, activeColumn: number) => {
     // console.table(columnPowers);
     const mergeGroups: number[][][] = findMergeGroups();
 
+    // if we know we're gonna merge, might as well lock it now
     if (mergeGroups.length > 0) {
         animLock = true;
+    }
+
+    // update the minimum power
+    const newMinimumPower = Math.max(getMaxPowerActive() - 5, 0);
+    if (newMinimumPower > minimumPower) {
+        minimumPower = newMinimumPower;
+        console.log(`minimumPower is now set to ${newMinimumPower}`);
+
+        // remove all on-screen blocks below the new minimum
+        for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+            const column = columnPowers[columnIndex];
+            for (let index = 0; index < rowCount; index++) {
+                const power = column[index];
+                if (power !== -1 && power < minimumPower) {
+                    columnPowers[columnIndex][index] = -1;
+                }
+            }
+        }
+
+        // reset power progression
+        powerProgression = powerProgression.map(
+            () => minimumPower + randRangeInt(0, 2),
+        );
     }
 
     for (let groupIndex = 0; groupIndex < mergeGroups.length; groupIndex++) {
@@ -395,19 +433,20 @@ const MergeMania = () => {
         x: number,
         y: number,
         power: number,
+        size: number = blockSize,
     ) => {
         p5.frameCount;
         if (power >= 0) {
             // draw block background
             p5.fill(getColorFromNumber(p5, power));
-            p5.rect(x, y, blockSize, blockSize, roundingRadius);
+            p5.rect(x, y, size, size, roundingRadius);
 
             // draw text
             p5.fill(p5.color("#000"));
             p5.textAlign(p5.CENTER, p5.CENTER);
-            p5.textSize(48);
+            p5.textSize(48 * (size / blockSize));
             p5.textFont('"Source Code Pro", monospace');
-            p5.text(`${2 ** power}`, x + blockSize / 2, y + blockSize / 2);
+            p5.text(`${2 ** power}`, x + size / 2, y + size / 2);
         }
     };
 
@@ -416,9 +455,10 @@ const MergeMania = () => {
         x: number,
         y: number,
         power: number,
+        size: number = blockSize,
     ) => {
         const [actualX, actualY] = actualCoordinatesFromGrid([x, y]);
-        drawPowerBlock(p5, actualX, actualY, power);
+        drawPowerBlock(p5, actualX, actualY, power, size);
     };
 
     const mouseClicked = (p5: p5Types) => {
@@ -431,7 +471,7 @@ const MergeMania = () => {
                 animLock = true;
                 const endGridPosY = getNextOpenIndexInColumn(columnIndex);
 
-                const newPower = 0;
+                const newPower = powerProgression[0];
                 const fromGrid = [columnIndex, 5];
                 const toGrid = [columnIndex, endGridPosY];
 
@@ -447,7 +487,7 @@ const MergeMania = () => {
                     newBlockAnimationDurationMillis,
                     newBlockAnimationCurveFunction,
                     () => {
-                        addPowerToColumn(columnIndex, 0);
+                        addPowerToColumn(columnIndex, newPower);
                         animLock = false;
                         tryCheckMergeSingleStep(p5, columnIndex);
                     },
@@ -466,6 +506,19 @@ const MergeMania = () => {
         // set the background color to black
         p5.background(p5.color("#000"));
 
+        // draw the current powerblock progression
+        drawPowerBlockAtGridLocation(p5, 1.5, 6, powerProgression[0]);
+        drawPowerBlockAtGridLocation(
+            p5,
+            2.5,
+            6,
+            powerProgression[1],
+            blockSize * 0.8,
+        );
+
+        // draw the minimum powerblock for reference
+        drawPowerBlockAtGridLocation(p5, 4.5, 6, minimumPower, blockSize * 0.5);
+
         // draw the columns
         for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
             p5.fill(p5.color("#222"));
@@ -476,9 +529,9 @@ const MergeMania = () => {
             // draw columns
             p5.rect(
                 padding * (columnIndex + 1) + columnIndex * blockSize,
-                blockSize + padding * 2,
+                blockSize + padding * 3,
                 blockSize,
-                blockSize * rowCount + padding * rowCount + 1,
+                blockSize * rowCount + padding * (rowCount - 1),
                 roundingRadius,
             );
         }
