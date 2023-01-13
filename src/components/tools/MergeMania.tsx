@@ -352,21 +352,21 @@ const tryCheckMergeSingleStep = (p5: p5Types, activeColumn: number) => {
         minimumPower = newMinimumPower;
         console.log(`minimumPower is now set to ${newMinimumPower}`);
 
-        // remove all on-screen blocks below the new minimum
-        for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-            const column = columnPowers[columnIndex];
-            for (let index = 0; index < rowCount; index++) {
-                const power = column[index];
-                if (power !== -1 && power < minimumPower) {
-                    columnPowers[columnIndex][index] = -1;
-                }
-            }
-        }
-
         // reset power progression
         powerProgression = powerProgression.map(
             () => minimumPower + randRangeInt(0, 2),
         );
+    }
+
+    // remove all on-screen blocks below the new minimum
+    for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+        const column = columnPowers[columnIndex];
+        for (let index = 0; index < rowCount; index++) {
+            const power = column[index];
+            if (power !== -1 && power < minimumPower) {
+                columnPowers[columnIndex][index] = -1;
+            }
+        }
     }
 
     for (let groupIndex = 0; groupIndex < mergeGroups.length; groupIndex++) {
