@@ -335,6 +335,7 @@ const findMergeGroups = () => {
     return mergeGroups;
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 const tryCheckMergeSingleStep = (p5: p5Types, activeColumn: number) => {
     // console.log("checking merge status, table follows");
     // console.table(columnPowers);
