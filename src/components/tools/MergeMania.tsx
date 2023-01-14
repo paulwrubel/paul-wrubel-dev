@@ -1,5 +1,7 @@
 // import { Box } from "@mui/material";
 
+import { useTheme } from "@mui/material";
+
 import Bezier from "bezier-easing";
 import p5Types from "p5";
 import Sketch from "react-p5";
@@ -44,6 +46,18 @@ type Animation = {
 const blockSize = 100;
 const padding = 5;
 const roundingRadius = 12;
+const colorProgression: string[] = [
+    "#BAFF29",
+    "#D90DA3",
+    "#34E4EA",
+    "#625AFF",
+    "#D68FD6",
+    "#CBC0AD",
+    "#FE5F55",
+    "#279AF1",
+    "#FFDD78",
+    "#B118C8",
+];
 
 // columns
 const columnCount = 5;
@@ -72,6 +86,7 @@ const stepsAboveMinimumToDrop = 3;
 
 // misc
 const localStorageKey = "mergemania";
+const fontString = '"Source Code Pro", monospace';
 
 /**
  * Variables
@@ -103,8 +118,12 @@ const randRangeInt = (
     return Math.floor((rng?.quick() ?? Math.random()) * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
 };
 
-const getColorFromNumber = (p5: p5Types, n: number): p5Types.Color => {
-    const rng = seedrandom(`c${n}`);
+const getColorFromPower = (p5: p5Types, p: number): p5Types.Color => {
+    return p5.color(colorProgression[p % colorProgression.length]);
+};
+
+const getRandomColorFromPower = (p5: p5Types, p: number): p5Types.Color => {
+    const rng = seedrandom(`c${p}`);
     return p5.color(
         `hsl(${randRangeInt(0, 360, rng)}, ${randRangeInt(
             50,
@@ -543,6 +562,8 @@ const tryCheckNewMinimumPower = (p5: p5Types) => {
 };
 
 const MergeMania = () => {
+    const theme = useTheme();
+
     const mouseIsOverColumnRect = (
         p5: p5Types,
         columnIndex: number,
@@ -575,15 +596,20 @@ const MergeMania = () => {
         p5.frameCount;
         if (power >= 0) {
             // draw block background
-            p5.fill(getColorFromNumber(p5, power));
+            const bgColor = getColorFromPower(p5, power);
+            p5.fill(bgColor);
             p5.rect(x, y, size, size, roundingRadius);
 
             // draw text
             const blockText = getFormattedBlockText(power);
-            p5.fill(p5.color("#000"));
+            p5.fill(
+                p5.color(
+                    theme.palette.getContrastText(bgColor.toString("#rrggbb")),
+                ),
+            );
             p5.textAlign(p5.CENTER, p5.CENTER);
             p5.textSize(44 * (size / blockSize));
-            p5.textFont('"Source Code Pro", monospace');
+            p5.textFont(fontString);
             p5.text(blockText, x + size / 2, y + size / 2);
         }
     };
@@ -679,7 +705,7 @@ const MergeMania = () => {
         p5.fill(p5.color("#FFF"));
         p5.textAlign(p5.LEFT, p5.TOP);
         p5.textSize(32);
-        p5.textFont('"Source Code Pro", monospace');
+        p5.textFont(fontString);
         p5.text(levelText, 10, 10);
 
         // draw the current powerblock progression
@@ -692,8 +718,20 @@ const MergeMania = () => {
             blockSize * 0.8,
         );
 
-        // draw the minimum powerblock for reference
-        drawPowerBlockAtGridLocation(p5, 4.5, 6, minimumPower, blockSize * 0.5);
+        // draw the goal powerblock for reference
+        p5.fill(p5.color("#FFF"));
+        p5.textAlign(p5.RIGHT, p5.TOP);
+        p5.textSize(20);
+        p5.textFont(fontString);
+        const textCoords = actualCoordinatesFromGrid([4.4, 5.9]);
+        p5.text("goal:", textCoords[0], textCoords[1]);
+        drawPowerBlockAtGridLocation(
+            p5,
+            4.5,
+            6,
+            minimumPower + stepsAboveMinimumToAdvance,
+            blockSize * 0.5,
+        );
 
         // draw the columns
         for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
