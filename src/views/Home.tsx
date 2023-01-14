@@ -66,7 +66,8 @@ const Home = ({
     finishedAnim: boolean;
     setFinishedAnim: (arg1: boolean) => void;
 }) => {
-    const [enterPressed, setEnterPressed] = useState(finishedAnim);
+    const [interactionCompleted, setInteractionCompleted] =
+        useState(finishedAnim);
 
     const [commandIndex, setCommandIndex] = useState(0);
     const [commandString, setCommandString] = useState<string>(
@@ -86,13 +87,21 @@ const Home = ({
         if (!finishedAnim) {
             const handleKeyDown = (e: KeyboardEvent) => {
                 if (commandAnimationFinished && e.key === "Enter") {
-                    setEnterPressed(true);
+                    setInteractionCompleted(true);
                 }
                 document.removeEventListener("keydown", handleKeyDown);
             };
+            const handleTouchEnd = () => {
+                if (commandAnimationFinished) {
+                    setInteractionCompleted(true);
+                }
+                document.removeEventListener("touchend", handleTouchEnd);
+            };
             document.addEventListener("keydown", handleKeyDown);
+            document.addEventListener("touchend", handleTouchEnd);
             return () => {
                 document.removeEventListener("keydown", handleKeyDown);
+                document.removeEventListener("touchend", handleTouchEnd);
             };
         }
     });
@@ -127,18 +136,22 @@ const Home = ({
     }, [commandString]);
 
     useEffect(() => {
-        if (!finishedAnim && enterPressed && outputIndex < outputSteps.length) {
+        if (
+            !finishedAnim &&
+            interactionCompleted &&
+            outputIndex < outputSteps.length
+        ) {
             const nextStep = outputSteps[outputIndex];
             setTimeout(() => {
                 setOutputNodes([...outputNodes, nextStep.n]);
             }, nextStep.i);
             setOutputIndex(outputIndex + 1);
         }
-    }, [outputNodes, enterPressed]);
+    }, [outputNodes, interactionCompleted]);
 
     useEffect(() => {
-        if (!finishedAnim && enterPressed) {
-            setTimeout(
+        if (!finishedAnim && interactionCompleted) {
+            const timeoutID = setTimeout(
                 () => {
                     setFinishedAnim(true);
                 },
@@ -146,8 +159,11 @@ const Home = ({
                     return acc + cur.i;
                 }, 100),
             );
+            return () => {
+                clearTimeout(timeoutID);
+            };
         }
-    }, [enterPressed]);
+    }, [interactionCompleted]);
 
     return (
         <>
@@ -169,10 +185,10 @@ const Home = ({
                         fontFamily='"Source Code Pro", monospace'
                     >
                         {commandString +
-                            (showCaret && !enterPressed ? "_" : "")}
+                            (showCaret && !interactionCompleted ? "_" : "")}
                     </Typography>
                 </Paper>
-                {enterPressed && (
+                {interactionCompleted && (
                     <Paper variant="outlined" elevation={0} sx={{ p: 2, m: 2 }}>
                         <Typography
                             component="div"
