@@ -5,16 +5,26 @@ import p5Types from "p5";
 import Sketch from "react-p5";
 import seedrandom from "seedrandom";
 
+type LocalStorageData = {
+    minimumPower: number;
+    powerProgression: number[];
+    columnPowers: number[][];
+};
+
 type AnimSubject = {
     power: number;
     startPos: number[];
     endPos: number[];
+    startSize: number;
+    endSize: number;
 };
 
 type AnimGridSubject = {
     power: number;
     startGridPos: number[];
     endGridPos: number[];
+    startSize: number;
+    endSize: number;
 };
 
 type Animation = {
@@ -53,17 +63,35 @@ const mergeAnimationCurveFunction = Bezier(0.2, 0, 0, 1);
 const collapseAnimationDurationMillis = 300;
 const collapseAnimationCurveFunction = Bezier(0.4, 1, 0, 1);
 
+const removeBlockAnimationDurationMillis = 500;
+const removeBlockAnimationCurveFunction = Bezier(0.6, 1, 0, 1);
+
+// progressiong settings
+const stepsAboveMinimumToAdvance = 8;
+const stepsAboveMinimumToDrop = 3;
+
+// misc
+const localStorageKey = "mergemania";
+
 /**
  * Variables
  */
 
-const columnPowers: number[][] = [...Array(columnCount).keys()].map(() =>
+let columnPowers: number[][] = [...Array(columnCount).keys()].map(() =>
     [...Array(rowCount).keys()].map(() => -1),
 );
 let runningAnimations: Animation[] = [];
 let animLock = false;
 let minimumPower = 0;
 let powerProgression = [0, 0];
+
+// const randomRange = (
+//     min: number,
+//     max: number,
+//     rng?: seedrandom.PRNG,
+// ): number => {
+//     return (rng?.quick() ?? Math.random()) * (max - min) + min;
+// };
 
 const randRangeInt = (
     min: number,
@@ -76,7 +104,7 @@ const randRangeInt = (
 };
 
 const getColorFromNumber = (p5: p5Types, n: number): p5Types.Color => {
-    const rng = seedrandom(`b${n}`);
+    const rng = seedrandom(`c${n}`);
     return p5.color(
         `hsl(${randRangeInt(0, 360, rng)}, ${randRangeInt(
             50,
@@ -84,6 +112,48 @@ const getColorFromNumber = (p5: p5Types, n: number): p5Types.Color => {
             rng,
         )}%, ${randRangeInt(50, 70, rng)}%)`,
     );
+};
+
+const saveToLocalStorage = (p5: p5Types) => {
+    const saveData: LocalStorageData = {
+        minimumPower: minimumPower,
+        powerProgression: powerProgression,
+        columnPowers: columnPowers,
+    };
+    p5.storeItem(localStorageKey, saveData);
+};
+
+const loadFromLocalStorage = (p5: p5Types) => {
+    const saveData = p5.getItem(localStorageKey) as LocalStorageData;
+
+    minimumPower = saveData.minimumPower;
+    powerProgression = saveData.powerProgression;
+    columnPowers = saveData.columnPowers;
+};
+
+const getFormattedBlockText = (power: number): string => {
+    let symbols = ["", ..."kmgtpezyrq".split("")];
+    let scaledPower = power;
+    if (power >= symbols.length * 10) {
+        scaledPower = power - symbols.length * 10;
+
+        const newSymbolsString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        symbols = [
+            ...newSymbolsString.split(""),
+            ...newSymbolsString
+                .split("")
+                .flatMap((s1) =>
+                    newSymbolsString.split("").map((s2) => s1 + s2),
+                ),
+        ];
+    }
+    const symbol = symbols
+        .slice()
+        .find(
+            (s, i) => scaledPower >= i * 10 && scaledPower - i * 10 < 10,
+        ) as string;
+    const base = 2 ** (scaledPower - 10 * symbols.indexOf(symbol));
+    return `${base}${symbol}`;
 };
 
 const getNextOpenIndexInColumn = (columnIndex: number): number => {
@@ -94,11 +164,14 @@ const addPowerToColumn = (columnIndex: number, power: number) => {
     const index = getNextOpenIndexInColumn(columnIndex);
     if (index !== -1) {
         columnPowers[columnIndex][index] = power;
-        powerProgression = [
-            ...powerProgression.slice(1),
-            minimumPower + randRangeInt(0, 2),
-        ];
     }
+};
+
+const advancePowerProgression = () => {
+    powerProgression = [
+        ...powerProgression.slice(1),
+        minimumPower + randRangeInt(0, stepsAboveMinimumToDrop),
+    ];
 };
 
 const getMaxPowerActive = (): number => {
@@ -131,6 +204,8 @@ const addBlockAnimation = (
             power: subject.power,
             startPos: actualCoordinatesFromGrid(subject.startGridPos),
             endPos: actualCoordinatesFromGrid(subject.endGridPos),
+            startSize: subject.startSize,
+            endSize: subject.endSize,
         };
     });
 
@@ -153,8 +228,14 @@ const addBlockAnimation = (
     });
 };
 
-const tryCheckCollapse = (p5: p5Types, activeColumn: number) => {
+const tryCheckCollapse = (
+    p5: p5Types,
+    activeColumn: number,
+    onAnimChainFinished?: () => void,
+) => {
     let didCollapse = false;
+    const subjects: AnimGridSubject[] = [];
+    const onFinishFunctions: (() => void)[] = [];
     for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
         const column = columnPowers[columnIndex];
         for (let index = 0; index < rowCount; index++) {
@@ -173,23 +254,17 @@ const tryCheckCollapse = (p5: p5Types, activeColumn: number) => {
                     const fromGrid = [columnIndex, nextBlockIndex];
                     const toGrid = [columnIndex, index];
 
-                    addBlockAnimation(
-                        p5,
-                        [
-                            {
-                                power: newPower,
-                                startGridPos: fromGrid,
-                                endGridPos: toGrid,
-                            },
-                        ],
-                        collapseAnimationDurationMillis,
-                        collapseAnimationCurveFunction,
-                        () => {
-                            columnPowers[columnIndex][index] = newPower;
-                            animLock = false;
-                            tryCheckMergeSingleStep(p5, columnIndex);
-                        },
-                    );
+                    subjects.push({
+                        power: newPower,
+                        startGridPos: fromGrid,
+                        endGridPos: toGrid,
+                        startSize: blockSize,
+                        endSize: blockSize,
+                    });
+
+                    onFinishFunctions.push(() => {
+                        columnPowers[columnIndex][index] = newPower;
+                    });
 
                     // post add procedure
                     columnPowers[columnIndex][nextBlockIndex] = -1;
@@ -197,8 +272,21 @@ const tryCheckCollapse = (p5: p5Types, activeColumn: number) => {
             }
         }
     }
-    if (!didCollapse) {
-        tryCheckMergeSingleStep(p5, activeColumn);
+
+    if (didCollapse) {
+        addBlockAnimation(
+            p5,
+            subjects,
+            collapseAnimationDurationMillis,
+            collapseAnimationCurveFunction,
+            () => {
+                onFinishFunctions.forEach((func) => func());
+                animLock = false;
+                tryCheckMergeSingleStep(p5, activeColumn, onAnimChainFinished);
+            },
+        );
+    } else {
+        tryCheckMergeSingleStep(p5, activeColumn, onAnimChainFinished);
     }
 };
 
@@ -335,10 +423,12 @@ const findMergeGroups = () => {
     return mergeGroups;
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
-const tryCheckMergeSingleStep = (p5: p5Types, activeColumn: number) => {
-    // console.log("checking merge status, table follows");
-    // console.table(columnPowers);
+const tryCheckMergeSingleStep = (
+    p5: p5Types,
+    activeColumn: number,
+    onAnimChainFinished?: () => void,
+    // eslint-disable-next-line sonarjs/cognitive-complexity
+) => {
     const mergeGroups: number[][][] = findMergeGroups();
 
     // if we know we're gonna merge, might as well lock it now
@@ -346,37 +436,15 @@ const tryCheckMergeSingleStep = (p5: p5Types, activeColumn: number) => {
         animLock = true;
     }
 
-    // update the minimum power
-    const newMinimumPower = Math.max(getMaxPowerActive() - 5, 0);
-    if (newMinimumPower > minimumPower) {
-        minimumPower = newMinimumPower;
-        console.log(`minimumPower is now set to ${newMinimumPower}`);
-
-        // reset power progression
-        powerProgression = powerProgression.map(
-            () => minimumPower + randRangeInt(0, 2),
-        );
-    }
-
-    // remove all on-screen blocks below the new minimum
-    for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-        const column = columnPowers[columnIndex];
-        for (let index = 0; index < rowCount; index++) {
-            const power = column[index];
-            if (power !== -1 && power < minimumPower) {
-                columnPowers[columnIndex][index] = -1;
-            }
-        }
-    }
-
+    // assemble subjects and process changes
+    const subjects: AnimGridSubject[] = [];
+    const onFinishFunctions: (() => void)[] = [];
     for (let groupIndex = 0; groupIndex < mergeGroups.length; groupIndex++) {
         const group = mergeGroups[groupIndex];
         const groupCenter = getCenterOfMergeGroup(group, activeColumn);
         const newPower =
             columnPowers[groupCenter[0]][groupCenter[1]] + group.length - 1;
 
-        // assemble subjects
-        const subjects: AnimGridSubject[] = [];
         for (let index = 0; index < group.length; index++) {
             const loc = group[index];
             if (loc[0] === groupCenter[0] && loc[1] === groupCenter[1]) {
@@ -387,10 +455,17 @@ const tryCheckMergeSingleStep = (p5: p5Types, activeColumn: number) => {
                 power: newPower,
                 startGridPos: loc,
                 endGridPos: groupCenter,
+                startSize: blockSize,
+                endSize: blockSize,
             });
             columnPowers[loc[0]][loc[1]] = -1;
         }
 
+        onFinishFunctions.push(() => {
+            columnPowers[groupCenter[0]][groupCenter[1]] = newPower;
+        });
+    }
+    if (mergeGroups.length > 0) {
         // add animation
         addBlockAnimation(
             p5,
@@ -398,11 +473,67 @@ const tryCheckMergeSingleStep = (p5: p5Types, activeColumn: number) => {
             mergeAnimationDurationMillis,
             mergeAnimationCurveFunction,
             () => {
-                columnPowers[groupCenter[0]][groupCenter[1]] = newPower;
+                onFinishFunctions.forEach((func) => func());
                 animLock = false;
-                tryCheckCollapse(p5, groupCenter[0]);
+                tryCheckCollapse(p5, activeColumn, onAnimChainFinished);
             },
         );
+    } else {
+        onAnimChainFinished?.();
+    }
+};
+
+const tryCheckNewMinimumPower = (p5: p5Types) => {
+    // update the minimum power
+    const newMinimumPower = Math.max(
+        getMaxPowerActive() - (stepsAboveMinimumToAdvance - 1),
+        0,
+    );
+    if (newMinimumPower > minimumPower) {
+        minimumPower = newMinimumPower;
+
+        // reset power progression
+        powerProgression = powerProgression.map(
+            () => minimumPower + randRangeInt(0, stepsAboveMinimumToDrop),
+        );
+
+        // remove all on-screen blocks below the new minimum
+        let activeColumn = 0;
+        let removedAnyBlock = false;
+        const subjects: AnimGridSubject[] = [];
+        for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+            const column = columnPowers[columnIndex];
+            for (let index = 0; index < rowCount; index++) {
+                const power = column[index];
+                if (power !== -1 && power < minimumPower) {
+                    removedAnyBlock = true;
+                    // we'll just set it to whichever one we saw last, because why not
+                    activeColumn = columnIndex;
+                    // this is the removal animation
+                    subjects.push({
+                        power: columnPowers[columnIndex][index],
+                        startGridPos: [columnIndex, index],
+                        endGridPos: [columnIndex + 0.5, index - 0.5],
+                        startSize: blockSize,
+                        endSize: 0,
+                    });
+                    // just immediately remove it on-record
+                    columnPowers[columnIndex][index] = -1;
+                }
+            }
+        }
+
+        if (removedAnyBlock) {
+            addBlockAnimation(
+                p5,
+                subjects,
+                removeBlockAnimationDurationMillis,
+                removeBlockAnimationCurveFunction,
+                () => {
+                    tryCheckCollapse(p5, activeColumn);
+                },
+            );
+        }
     }
 };
 
@@ -443,11 +574,12 @@ const MergeMania = () => {
             p5.rect(x, y, size, size, roundingRadius);
 
             // draw text
+            const blockText = getFormattedBlockText(power);
             p5.fill(p5.color("#000"));
             p5.textAlign(p5.CENTER, p5.CENTER);
-            p5.textSize(48 * (size / blockSize));
+            p5.textSize(44 * (size / blockSize));
             p5.textFont('"Source Code Pro", monospace');
-            p5.text(`${2 ** power}`, x + size / 2, y + size / 2);
+            p5.text(blockText, x + size / 2, y + size / 2);
         }
     };
 
@@ -476,24 +608,53 @@ const MergeMania = () => {
                 const fromGrid = [columnIndex, 5];
                 const toGrid = [columnIndex, endGridPosY];
 
+                const powerProgressionCopy = powerProgression.slice();
+                // advancePowerProgression();
+                powerProgression = [];
+                // powerProgression[powerProgressionCopy.length - 1] =
                 addBlockAnimation(
                     p5,
                     [
+                        // the block we are adding
                         {
                             power: newPower,
                             startGridPos: fromGrid,
                             endGridPos: toGrid,
+                            startSize: blockSize,
+                            endSize: blockSize,
+                        },
+                        // the power progression indicator block
+
+                        // drawPowerBlockAtGridLocation(p5, 1.5, 6, powerProgression[0]);
+                        // drawPowerBlockAtGridLocation(
+                        //     p5,
+                        //     2.5,
+                        //     6,
+                        //     powerProgression[1],
+                        //     blockSize * 0.8,
+                        // );
+
+                        {
+                            power: powerProgressionCopy[1],
+                            startGridPos: [2.5, 6],
+                            endGridPos: [1.5, 6],
+                            startSize: blockSize * 0.8,
+                            endSize: blockSize,
                         },
                     ],
                     newBlockAnimationDurationMillis,
                     newBlockAnimationCurveFunction,
                     () => {
                         addPowerToColumn(columnIndex, newPower);
+                        powerProgression = powerProgressionCopy;
+                        advancePowerProgression();
                         animLock = false;
-                        tryCheckMergeSingleStep(p5, columnIndex);
+                        tryCheckMergeSingleStep(p5, columnIndex, () => {
+                            tryCheckNewMinimumPower(p5);
+                            saveToLocalStorage(p5);
+                        });
                     },
                 );
-                console.log("clicked on " + columnIndex);
             }
         }
     };
@@ -501,11 +662,20 @@ const MergeMania = () => {
     const setup = (p5: p5Types, canvasParentRef: Element) => {
         p5.createCanvas(width, height).parent(canvasParentRef);
         p5.frameRate(144);
+        loadFromLocalStorage(p5);
     };
 
     const draw = (p5: p5Types) => {
         // set the background color to black
         p5.background(p5.color("#000"));
+
+        // draw the level
+        const levelText = `Level ${minimumPower + 1}`;
+        p5.fill(p5.color("#FFF"));
+        p5.textAlign(p5.LEFT, p5.TOP);
+        p5.textSize(32);
+        p5.textFont('"Source Code Pro", monospace');
+        p5.text(levelText, 10, 10);
 
         // draw the current powerblock progression
         drawPowerBlockAtGridLocation(p5, 1.5, 6, powerProgression[0]);
@@ -575,7 +745,14 @@ const MergeMania = () => {
                     subject.startPos[1],
                     subject.endPos[1],
                 );
-                drawPowerBlock(p5, x, y, subject.power);
+                const size = p5.map(
+                    progression,
+                    0,
+                    1,
+                    subject.startSize,
+                    subject.endSize,
+                );
+                drawPowerBlock(p5, x, y, subject.power, size);
             });
 
             if (p5.frameCount >= animation.endTime) {
