@@ -124,11 +124,16 @@ const saveToLocalStorage = (p5: p5Types) => {
 };
 
 const loadFromLocalStorage = (p5: p5Types) => {
-    const saveData = p5.getItem(localStorageKey) as LocalStorageData;
+    const saveData = p5.getItem(localStorageKey) as
+        | LocalStorageData
+        | undefined
+        | null;
 
-    minimumPower = saveData.minimumPower;
-    powerProgression = saveData.powerProgression;
-    columnPowers = saveData.columnPowers;
+    if (saveData) {
+        minimumPower = saveData.minimumPower;
+        powerProgression = saveData.powerProgression;
+        columnPowers = saveData.columnPowers;
+    }
 };
 
 const getFormattedBlockText = (power: number): string => {
