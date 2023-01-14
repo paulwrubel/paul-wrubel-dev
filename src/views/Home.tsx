@@ -59,6 +59,8 @@ const outputSteps: { n: React.ReactNode; i: number }[] = [
     },
 ];
 
+const autoInteractDelay = 5000;
+
 const Home = ({
     finishedAnim,
     setFinishedAnim,
@@ -111,6 +113,9 @@ const Home = ({
             setTimeout(
                 () => {
                     setCommandAnimationFinished(true);
+                    setTimeout(() => {
+                        setInteractionCompleted(true);
+                    }, autoInteractDelay);
                 },
                 commandSteps.reduce((acc, cur) => {
                     return acc + cur.i;
