@@ -151,18 +151,15 @@ const MergeManiaProto = () => {
                 if (matchesAbove) {
                     columnPowersCopy[ci].splice(i, 2, column[i] + 1);
                     didCollapse = true;
-                    console.log("matches above!");
                 }
                 if (matchesRight) {
                     columnPowersCopy[ci].splice(i, 1, column[i] + 1);
                     columnPowersCopy[ci + 1].splice(i, 1);
                     didCollapse = true;
-                    console.log("matches right!");
                 }
             }
         }
         if (didCollapse) {
-            console.log(columnPowersCopy);
             setColumnPowers(columnPowersCopy);
         }
         return didCollapse;
@@ -195,7 +192,6 @@ const MergeManiaProto = () => {
             // });
             if (didCollapse) {
                 const newMinPower = Math.max(getMaxPowerActive() - 5, 0);
-                console.log("setting min power to " + newMinPower);
                 setMinimumPower(newMinPower);
                 setAnimating(true);
             }

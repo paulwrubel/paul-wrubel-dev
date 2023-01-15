@@ -97,12 +97,14 @@ const fontString = '"Source Code Pro", monospace';
  * Variables
  */
 
+let ranSetup = false;
+
 let columnPowers: number[][] = [...Array(columnCount).keys()].map(() =>
     [...Array(rowCount).keys()].map(() => -1),
 );
 let runningAnimations: Animation[] = [];
 let animLock = false;
-let minimumPower = 0;
+let minimumPower = 24;
 let powerProgression = [0, 0];
 
 // const randomRange = (
@@ -613,7 +615,7 @@ const MergeMania = () => {
                 ),
             );
             p5.textAlign(p5.CENTER, p5.CENTER);
-            p5.textSize(44 * (size / blockSize) * scalar);
+            p5.textSize(40 * (size / blockSize) * scalar);
             p5.textFont(fontString);
             p5.text(blockText, x + size / 2, y + size / 2);
         }
@@ -696,9 +698,12 @@ const MergeMania = () => {
     };
 
     const setup = (p5: p5Types, canvasParentRef: Element) => {
-        p5.createCanvas(width, height).parent(canvasParentRef);
-        p5.frameRate(144);
-        loadFromLocalStorage(p5);
+        if (!ranSetup) {
+            p5.createCanvas(width, height).parent(canvasParentRef);
+            p5.frameRate(144);
+            loadFromLocalStorage(p5);
+            ranSetup = true; // for some reason this is necessary? otherwise it creates two canvasses. no idea why
+        }
     };
 
     const draw = (p5: p5Types) => {
@@ -706,10 +711,10 @@ const MergeMania = () => {
         p5.background(p5.color("#000"));
 
         // draw the level
-        const levelText = `Level ${minimumPower + 1}`;
+        const levelText = `Lvl ${minimumPower + 1}`;
         p5.fill(p5.color("#FFF"));
         p5.textAlign(p5.LEFT, p5.TOP);
-        p5.textSize(32 * scalar);
+        p5.textSize(28 * scalar);
         p5.textFont(fontString);
         p5.text(levelText, 10 * scalar, 10 * scalar);
 
