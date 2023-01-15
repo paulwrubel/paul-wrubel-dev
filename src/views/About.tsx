@@ -1,4 +1,11 @@
-import { Container, Link as MuiLink, Paper, Typography } from "@mui/material";
+import {
+    Container,
+    Link as MuiLink,
+    Paper,
+    Typography,
+    useMediaQuery,
+    useTheme,
+} from "@mui/material";
 
 import { Helmet } from "react-helmet-async";
 
@@ -9,16 +16,18 @@ const links: { name: string; url: string }[] = [
 
 const ManSection = ({
     title,
+    fontSize,
     children,
 }: {
     title: string;
+    fontSize: string;
     children: React.ReactNode;
 }) => {
     return (
         <>
             <Typography
                 variant="body1"
-                fontSize="1.3rem"
+                fontSize={fontSize}
                 fontWeight="bold"
                 fontFamily='"Source Code Pro", monospace'
             >
@@ -28,7 +37,7 @@ const ManSection = ({
                 gutterBottom
                 component="div"
                 variant="body1"
-                fontSize="1.3rem"
+                fontSize={fontSize}
                 fontFamily='"Source Code Pro", monospace'
                 sx={{ pl: "8%" }}
             >
@@ -41,16 +50,18 @@ const ManSection = ({
 
 const ManSubsection = ({
     title,
+    fontSize,
     children,
 }: {
     title: string;
+    fontSize: string;
     children: React.ReactNode;
 }) => {
     return (
         <>
             <Typography
                 variant="body1"
-                fontSize="1.3rem"
+                fontSize={fontSize}
                 fontWeight="bold"
                 fontFamily='"Source Code Pro", monospace'
             >
@@ -59,7 +70,7 @@ const ManSubsection = ({
             <Typography
                 gutterBottom
                 variant="body1"
-                fontSize="1.3rem"
+                fontSize={fontSize}
                 fontFamily='"Source Code Pro", monospace'
                 sx={{ pl: "8%" }}
             >
@@ -71,6 +82,13 @@ const ManSubsection = ({
 };
 
 const About = () => {
+    const theme = useTheme();
+    // const isBelowSmallBreakpoint = useMediaQuery(theme.breakpoints.down("sm"));
+    const isBelowMediumBreakpoint = useMediaQuery(theme.breakpoints.down("md"));
+
+    const fontSizePrimary = isBelowMediumBreakpoint ? "1.6rem" : "2rem";
+    const fontSizeSecondary = isBelowMediumBreakpoint ? "1rem" : "1.3rem";
+
     return (
         <>
             <Helmet>
@@ -80,7 +98,7 @@ const About = () => {
                 <Paper variant="outlined" elevation={0} sx={{ p: 2, m: 2 }}>
                     <Typography
                         variant="h1"
-                        fontSize="2rem"
+                        fontSize={fontSizePrimary}
                         // gutterBottom
                         fontFamily='"Source Code Pro", monospace'
                     >
@@ -88,11 +106,14 @@ const About = () => {
                     </Typography>
                 </Paper>
                 <Paper variant="outlined" elevation={0} sx={{ p: 2, m: 2 }}>
-                    <ManSection title="name">
+                    <ManSection title="name" fontSize={fontSizeSecondary}>
                         Paul Wrubel - software engineer and technology
                         enthusiast
                     </ManSection>
-                    <ManSection title="description">
+                    <ManSection
+                        title="description"
+                        fontSize={fontSizeSecondary}
+                    >
                         Paul Wrubel is a software engineer from Michigan. He
                         attended Michigan Technology University where he
                         graduated with a B.S. in Computer Science and a Minor in
@@ -110,24 +131,33 @@ const About = () => {
                         Outside of software, Paul enjoys playing video games,
                         playing with his cats, rollerblading, and baking.
                     </ManSection>
-                    <ManSection title="attributes">
+                    <ManSection title="attributes" fontSize={fontSizeSecondary}>
                         All are listed in order of most to least experience.
                         <br />
                         <br />
-                        <ManSubsection title="Languages">
+                        <ManSubsection
+                            title="Languages"
+                            fontSize={fontSizeSecondary}
+                        >
                             golang, typescript, javascript, python, java, scala,
                             c
                         </ManSubsection>
-                        <ManSubsection title="Technologies">
+                        <ManSubsection
+                            title="Technologies"
+                            fontSize={fontSizeSecondary}
+                        >
                             git, docker, react, unix, sql, rest, unity3d
                         </ManSubsection>
-                        <ManSubsection title="Skills">
+                        <ManSubsection
+                            title="Skills"
+                            fontSize={fontSizeSecondary}
+                        >
                             communication, knowledge sharing, problem solving,
                             prioritizing
                         </ManSubsection>
                     </ManSection>
 
-                    <ManSection title="see also">
+                    <ManSection title="see also" fontSize={fontSizeSecondary}>
                         {links.map(({ name, url }, i) => (
                             <span key={name}>
                                 <MuiLink href={url} fontWeight="bold">
