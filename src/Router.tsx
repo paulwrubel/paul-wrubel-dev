@@ -39,10 +39,8 @@ const Router = () => {
                             />
                         }
                     />
-                    <Route path="/tools" element={<Tools />}>
-                        <Route index element={<ToolsIndex />} />
-                        <Route path=":tool" element={<Tool />} />
-                    </Route>
+                    <Route path="/tools" element={<ToolsIndex />} />
+                    <Route path="/tools/:tool" element={<Tool />} />
                     <Route path="*" element={<NotFound />} />
                 </Route>
             </Routes>
