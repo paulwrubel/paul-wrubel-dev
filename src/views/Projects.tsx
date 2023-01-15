@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import { useEffect, useState } from "react";
 
 import Search from "@mui/icons-material/Search";
@@ -9,6 +10,8 @@ import {
     Paper,
     TextField,
     Typography,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 
 import { Helmet } from "react-helmet-async";
@@ -45,6 +48,15 @@ const Projects = ({
     finishedAnim: boolean;
     setFinishedAnim: (arg1: boolean) => void;
 }) => {
+    const theme = useTheme();
+    const isBelowSmallBreakpoint = useMediaQuery(theme.breakpoints.down("sm"));
+    const isBelowMediumBreakpoint = useMediaQuery(theme.breakpoints.down("md"));
+
+    const fontSizePrimary = isBelowMediumBreakpoint ? "1.6rem" : "2rem";
+    const fontSizeSecondary = isBelowMediumBreakpoint ? "1rem" : "1.8rem";
+    const fontSizeTertiary = isBelowMediumBreakpoint ? "1rem" : "1.5rem";
+    const fontSizeBody = isBelowMediumBreakpoint ? "1rem" : "1.3rem";
+
     const [commandAdditionalText, setCommandAdditionalText] = useState<string>(
         finishedAnim ? commandSteps.map((s) => s.s).join("") : "",
     );
@@ -102,28 +114,36 @@ const Projects = ({
                 <Paper
                     variant="outlined"
                     elevation={0}
-                    sx={{ p: 2, mx: 2, my: 4 }}
+                    sx={{
+                        p: 2,
+                        mx: 2,
+                        my: 4,
+                    }}
                 >
                     <Box
                         sx={{
+                            width: 1,
                             display: "flex",
+                            flexWrap: "wrap",
                             alignItems: "center",
-                            height: "4rem",
+                            rowGap: 1,
                         }}
                     >
                         <Typography
-                            flexShrink={0}
-                            noWrap
+                            // flexGrow={1}
+                            // flexShrink={0}
+                            // noWrap
                             variant="h1"
-                            fontSize="2rem"
+                            fontSize={fontSizePrimary}
                             fontFamily='"Source Code Pro", monospace'
+                            sx={{ overflowWrap: "normal" }}
                         >
                             {"> cat projects" + commandAdditionalText}
                         </Typography>
                         {showSearchField && (
                             <TextField
                                 size="small"
-                                fullWidth
+                                // fullWidth
                                 variant="outlined"
                                 value={searchString}
                                 onChange={(e) =>
@@ -137,9 +157,13 @@ const Projects = ({
                                     ),
                                 }}
                                 sx={{
+                                    // width: "auto",
+                                    minWidth: 50,
+                                    flexGrow: 1,
+                                    // flexShrink: 1,
                                     ml: 2,
                                     "& .MuiInputBase-input": {
-                                        fontSize: "2rem",
+                                        fontSize: { fontSizePrimary },
                                         fontFamily:
                                             '"Source Code Pro", monospace',
                                     },
@@ -175,12 +199,17 @@ const Projects = ({
                                     sx={{
                                         display: "flex",
                                         justifyContent: "space-between",
+                                        alignItems: "center",
+                                        py: 1,
+                                        gap: 1,
+                                        borderBottom: "1px solid #333",
                                     }}
                                 >
                                     <Typography
-                                        fontSize="1.8rem"
+                                        fontSize={fontSizeSecondary}
                                         fontWeight="bold"
                                         fontFamily='"Source Code Pro", monospace'
+                                        sx={{ flexGrow: 1 }}
                                     >
                                         {link ? (
                                             <MuiLink href={link}>
@@ -195,9 +224,11 @@ const Projects = ({
                                         </MuiLink>
                                     </Typography>
                                     <Typography
-                                        fontSize="1.8rem"
+                                        fontSize={fontSizeSecondary}
+                                        align="right"
                                         fontWeight="bold"
                                         fontFamily='"Source Code Pro", monospace'
+                                        sx={{ flexGrow: 0 }}
                                     >
                                         {date.format("MMM, YYYY")}
                                     </Typography>
@@ -206,26 +237,29 @@ const Projects = ({
                                     sx={{
                                         display: "flex",
                                         justifyContent: "space-between",
-                                        mb: 2,
+                                        alignItems: "center",
+                                        py: 1,
+                                        gap: 1,
+                                        borderBottom: "1px solid #333",
                                     }}
                                 >
                                     <Typography
-                                        fontSize="1.5rem"
+                                        fontSize={fontSizeTertiary}
                                         fontFamily='"Source Code Pro", monospace'
                                     >
                                         {languages.join(", ")}
                                     </Typography>
                                     <Typography
-                                        fontSize="1.5rem"
+                                        fontSize={fontSizeTertiary}
                                         fontFamily='"Source Code Pro", monospace'
                                     >
                                         {technologies.join(", ")}
                                     </Typography>
                                 </Box>
                                 <Typography
-                                    fontSize="1.3rem"
+                                    fontSize={fontSizeBody}
                                     fontFamily='"Source Code Pro", monospace'
-                                    sx={{ pl: "10%" }}
+                                    sx={{ py: 1, pl: "10%" }}
                                 >
                                     {description}
                                 </Typography>
