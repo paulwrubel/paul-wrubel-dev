@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import MenuIcon from "@mui/icons-material/Menu";
 import {
@@ -119,6 +119,7 @@ const NavBar = () => {
                         {logoBox}
                     </Box>
                     <NavBarResponsiveDrawer
+                        key="this is a key"
                         isOpen={isResponsiveDrawerOpen}
                         setIsOpen={setIsResponsiveDrawerOpen}
                         navTabs={navTabs}
@@ -138,7 +139,7 @@ const NavBar = () => {
                         {logoBox}
                     </Box>
                     {navTabs.map(({ name, to, selected, displayName }) => (
-                        <>
+                        <Fragment key={name}>
                             <Box
                                 key={name}
                                 component={name === "tools" ? "div" : Link}
@@ -170,7 +171,7 @@ const NavBar = () => {
                             >
                                 {displayName}
                             </Box>
-                        </>
+                        </Fragment>
                     ))}
                     <Drawer
                         open={isToolsDrawerOpen}
