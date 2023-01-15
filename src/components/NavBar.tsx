@@ -162,7 +162,7 @@ const NavBar = () => {
                         }}
                         PaperProps={{
                             sx: {
-                                width: "60vw",
+                                minWidth: "60vw",
                                 boxSizing: "border-box",
                                 backgroundImage: "none",
                                 backgroundColor:
