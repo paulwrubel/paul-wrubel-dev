@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 
-import { Container, Link as MuiLink, Paper, Typography } from "@mui/material";
+import {
+    Container,
+    Link as MuiLink,
+    Paper,
+    Typography,
+    useMediaQuery,
+    useTheme,
+} from "@mui/material";
 
 import { Helmet } from "react-helmet-async";
 
@@ -10,17 +17,17 @@ const commandSteps: { s: string; i: number }[] = [
     { s: "p", i: 200 },
     { s: "a", i: 50 },
     { s: "u", i: 50 },
-    { s: "l", i: 50 },
+    { s: "l\u200B", i: 50 },
     { s: "w", i: 270 },
     { s: "r", i: 70 },
     { s: "u", i: 70 },
     { s: "b", i: 70 },
     { s: "e", i: 70 },
-    { s: "l", i: 70 },
+    { s: "l\u200B", i: 70 },
     { s: ".", i: 300 },
     { s: "d", i: 300 },
     { s: "e", i: 100 },
-    { s: "v", i: 100 },
+    { s: "v\u200B", i: 100 },
 ];
 
 const outputSteps: { n: React.ReactNode; i: number }[] = [
@@ -84,6 +91,13 @@ const Home = ({
     const [showCaret, setShowCaret] = useState(true);
     const [commandAnimationFinished, setCommandAnimationFinished] =
         useState(finishedAnim);
+
+    const theme = useTheme();
+    const isBelowSmallBreakpoint = useMediaQuery(theme.breakpoints.down("sm"));
+    const isBelowMediumBreakpoint = useMediaQuery(theme.breakpoints.down("md"));
+
+    const fontSizePrimary = isBelowMediumBreakpoint ? "3rem" : "4rem";
+    const fontSizeSecondary = isBelowMediumBreakpoint ? "2rem" : "3rem";
 
     useEffect(() => {
         if (!finishedAnim) {
@@ -186,8 +200,9 @@ const Home = ({
                 >
                     <Typography
                         // align="left"
-                        fontSize="4rem"
+                        fontSize={fontSizePrimary}
                         fontFamily='"Source Code Pro", monospace'
+                        sx={{ overflowWrap: "break-word", hyphen: "manual" }}
                     >
                         {commandString +
                             (showCaret && !interactionCompleted ? "_" : "")}
@@ -197,9 +212,10 @@ const Home = ({
                     <Paper variant="outlined" elevation={0} sx={{ p: 2, m: 2 }}>
                         <Typography
                             component="div"
-                            fontSize="3rem"
+                            fontSize={fontSizeSecondary}
                             fontFamily='"Source Code Pro", monospace'
                             whiteSpace="pre-wrap"
+                            sx={{ overflowWrap: "break-word" }}
                         >
                             {outputNodes}
                             {!finishedAnim && outputIndex < 6 && showCaret
