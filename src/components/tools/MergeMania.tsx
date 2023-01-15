@@ -49,7 +49,7 @@ const rowCount = 6;
 // pre-sizing
 const preWidth = 100 * columnCount + 5 * (columnCount + 1);
 const preHeight = 100 * (rowCount + 1) + 5 * (rowCount + 3);
-const scalar = Math.min(1, window.innerWidth / preWidth);
+const scalar = Math.min(1, (window.innerWidth - 10) / preWidth);
 
 // canvas
 const width = preWidth * scalar;
