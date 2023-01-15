@@ -42,10 +42,23 @@ type Animation = {
  * Constants
  */
 
+// columns
+const columnCount = 5;
+const rowCount = 6;
+
+// pre-sizing
+const preWidth = 100 * columnCount + 5 * (columnCount + 1);
+const preHeight = 100 * (rowCount + 1) + 5 * (rowCount + 3);
+const scalar = Math.min(1, (window.innerWidth - 10) / preWidth);
+
+// canvas
+const width = preWidth * scalar;
+const height = preHeight * scalar;
+
 // blocks
-const blockSize = 100;
-const padding = 5;
-const roundingRadius = 12;
+const blockSize = 100 * scalar;
+const padding = 5 * scalar;
+const roundingRadius = 12 * scalar;
 const colorProgression: string[] = [
     "#BAFF29",
     "#D90DA3",
@@ -58,14 +71,6 @@ const colorProgression: string[] = [
     "#FFDD78",
     "#B118C8",
 ];
-
-// columns
-const columnCount = 5;
-const rowCount = 6;
-
-// canvas
-const width = blockSize * columnCount + padding * (columnCount + 1);
-const height = blockSize * (rowCount + 1) + padding * (rowCount + 3);
 
 // animations
 const newBlockAnimationDurationMillis = 200;
@@ -608,7 +613,7 @@ const MergeMania = () => {
                 ),
             );
             p5.textAlign(p5.CENTER, p5.CENTER);
-            p5.textSize(44 * (size / blockSize));
+            p5.textSize(44 * (size / blockSize) * scalar);
             p5.textFont(fontString);
             p5.text(blockText, x + size / 2, y + size / 2);
         }
@@ -704,9 +709,9 @@ const MergeMania = () => {
         const levelText = `Level ${minimumPower + 1}`;
         p5.fill(p5.color("#FFF"));
         p5.textAlign(p5.LEFT, p5.TOP);
-        p5.textSize(32);
+        p5.textSize(32 * scalar);
         p5.textFont(fontString);
-        p5.text(levelText, 10, 10);
+        p5.text(levelText, 10 * scalar, 10 * scalar);
 
         // draw the current powerblock progression
         drawPowerBlockAtGridLocation(p5, 1.5, 6, powerProgression[0]);
@@ -721,7 +726,7 @@ const MergeMania = () => {
         // draw the goal powerblock for reference
         p5.fill(p5.color("#FFF"));
         p5.textAlign(p5.RIGHT, p5.TOP);
-        p5.textSize(20);
+        p5.textSize(20 * scalar);
         p5.textFont(fontString);
         const textCoords = actualCoordinatesFromGrid([4.4, 5.9]);
         p5.text("goal:", textCoords[0], textCoords[1]);

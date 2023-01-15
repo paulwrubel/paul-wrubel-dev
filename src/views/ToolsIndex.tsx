@@ -21,7 +21,7 @@ const ToolsIndex = () => {
                         fontSize="3rem"
                         fontFamily='"Source Code Pro", monospace'
                     >
-                        select a tool from the right
+                        select a tool from the dropdown
                     </Typography>
                 </Paper>
             </Container>

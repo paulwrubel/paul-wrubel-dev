@@ -1,59 +1,84 @@
-import { Box, Typography } from "@mui/material";
+/* eslint-disable sonarjs/no-duplicate-string */
+import { useState } from "react";
+
+import MenuIcon from "@mui/icons-material/Menu";
+import {
+    Box,
+    Drawer,
+    IconButton,
+    Toolbar,
+    Typography,
+    useMediaQuery,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
 import { Link, useMatch } from "react-router-dom";
 
-const NavTab = ({
-    to,
-    selected,
-    children,
-}: {
-    to: string;
-    selected?: boolean | null;
-    children: React.ReactNode;
-}) => {
-    const theme = useTheme();
-    return (
-        <Box
-            component={Link}
-            to={to}
-            sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                width: 126,
-                height: 50,
-                mx: "2px",
-                textDecoration: "none",
-                // fontFamily: '"Source Code Pro", monospace',
-                fontSize: "1.3rem",
-                color: "black",
-                boxSizing: "content-box",
-                borderTop: selected
-                    ? `6px solid ${theme.palette.primary.main}`
-                    : "6px solid transparent",
-                borderBottom: "6px solid transparent",
-
-                ":hover": {
-                    borderBottom: `6px solid ${theme.palette.primary.main}`,
-                    transition: "border-bottom-color 200ms ease-out",
-                },
-            }}
-        >
-            <Box
-                sx={{
-                    textAlign: "center",
-                }}
-            >
-                {children}
-            </Box>
-        </Box>
-    );
-};
+import NavBarResponsiveDrawer from "components/NavBarResponsiveDrawer";
+import allTools from "data/tools";
 
 const NavBar = () => {
     const match = useMatch("/*");
+    const toolMatch = useMatch("/tools/:tool");
+
     const theme = useTheme();
+    const isBelowSmallBreakpoint = useMediaQuery(theme.breakpoints.down("sm"));
+
+    const [isResponsiveDrawerOpen, setIsResponsiveDrawerOpen] = useState(false);
+
+    const [isToolsDrawerOpen, setIsToolsDrawerOpen] = useState(false);
+
+    const toolList = allTools
+        .slice()
+        .sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
+
+    const logoBox = (
+        <Typography
+            color="black"
+            noWrap
+            fontSize="1.6rem"
+            fontWeight="200"
+            fontFamily='"Source Code Pro", monospace'
+            sx={{ userSelect: "none" }}
+        >
+            {"> paul wrubel"}
+        </Typography>
+    );
+
+    const navTabs: {
+        name: string;
+        to: string;
+        selected?: boolean;
+        displayName: string;
+    }[] = [
+        {
+            name: "home",
+            to: "/",
+            selected: match?.pathname === "/",
+            displayName: ">home",
+        },
+        {
+            name: "about",
+            to: "/about",
+            selected: match?.pathname === "/about",
+            displayName: ">about",
+        },
+        {
+            name: "projects",
+            to: "/projects",
+            selected: match?.pathname === "/projects",
+            displayName: ">projects",
+        },
+        {
+            name: "tools",
+            to: "/tools",
+            selected: isBelowSmallBreakpoint
+                ? match?.pathname === "/tools"
+                : match?.pathname.startsWith("/tools"),
+            displayName: ">tools",
+        },
+    ];
+
     return (
         <Box
             sx={{
@@ -68,40 +93,153 @@ const NavBar = () => {
                 position: "sticky",
                 top: 0,
                 zIndex: theme.zIndex.drawer + 1,
-                // overflowX: "hidden",
             }}
         >
-            <Box
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    flexGrow: "1",
-                    height: 1,
-                    p: 2,
-                }}
-            >
-                <Typography
-                    color="black"
-                    noWrap
-                    fontSize="1.6rem"
-                    fontWeight="200"
-                    fontFamily='"Source Code Pro", monospace'
-                >
-                    {"> paul wrubel"}
-                </Typography>
-            </Box>
-            <NavTab selected={match?.pathname === "/"} to="/">
-                {">home"}
-            </NavTab>
-            <NavTab selected={match?.pathname === "/about"} to="/about">
-                {">about"}
-            </NavTab>
-            <NavTab selected={match?.pathname === "/projects"} to="/projects">
-                {">projects"}
-            </NavTab>
-            <NavTab selected={match?.pathname.startsWith("/tools")} to="/tools">
-                {">tools"}
-            </NavTab>
+            {isBelowSmallBreakpoint ? (
+                <>
+                    <IconButton
+                        size="large"
+                        edge="start"
+                        aria-label="menu"
+                        onClick={() => {
+                            setIsResponsiveDrawerOpen(!isResponsiveDrawerOpen);
+                        }}
+                        sx={{ mr: 2, color: "black" }}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            flexDirection: "row",
+                            width: 1,
+                            justifyContent: "flex-end",
+                        }}
+                    >
+                        {logoBox}
+                    </Box>
+                    <NavBarResponsiveDrawer
+                        isOpen={isResponsiveDrawerOpen}
+                        setIsOpen={setIsResponsiveDrawerOpen}
+                        navTabs={navTabs}
+                    />
+                </>
+            ) : (
+                <>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            flexGrow: "1",
+                            height: 1,
+                            p: isBelowSmallBreakpoint ? 1 : 2,
+                        }}
+                    >
+                        {logoBox}
+                    </Box>
+                    {navTabs.map(({ name, to, selected, displayName }) => (
+                        <>
+                            <Box
+                                key={name}
+                                component={name === "tools" ? "div" : Link}
+                                to={to}
+                                onClick={() => {
+                                    if (name === "tools") {
+                                        setIsToolsDrawerOpen(
+                                            !isToolsDrawerOpen,
+                                        );
+                                    }
+                                }}
+                                sx={{
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    width: 126,
+                                    height: 1,
+                                    textDecoration: "none",
+                                    fontSize: "1.3rem",
+                                    color: "black",
+                                    userSelect: "none",
+                                    backgroundColor: selected ? "#DDD" : "#FFF",
+                                    ":hover": {
+                                        backgroundColor: selected
+                                            ? "#BBB"
+                                            : "#DDD",
+                                    },
+                                }}
+                            >
+                                {displayName}
+                            </Box>
+                        </>
+                    ))}
+                    <Drawer
+                        open={isToolsDrawerOpen}
+                        anchor="right"
+                        onClose={() => {
+                            setIsToolsDrawerOpen(false);
+                        }}
+                        PaperProps={{
+                            sx: {
+                                boxSizing: "border-box",
+                                backgroundImage: "none",
+                                backgroundColor:
+                                    theme.palette.secondary.darkest,
+                                // gap: 1,
+                                // p: "2px",
+                            },
+                        }}
+                    >
+                        <Toolbar />
+                        {toolList.map((tool) => {
+                            const isToolSelected =
+                                toolMatch?.params?.tool === tool.name;
+                            const backgroundColor = isToolSelected
+                                ? theme.palette.secondary.darker
+                                : theme.palette.secondary.darkest;
+
+                            const hoverColor = isToolSelected
+                                ? theme.palette.secondary.dark
+                                : theme.palette.secondary.darker;
+                            return (
+                                <Box
+                                    key={tool.name}
+                                    component={Link}
+                                    onClick={() => {
+                                        setIsToolsDrawerOpen(false);
+                                    }}
+                                    to={`/tools/${tool.name}`}
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        p: 2,
+
+                                        userSelect: "none",
+                                        textDecoration: "none",
+
+                                        border: "1px solid #000",
+
+                                        backgroundColor: backgroundColor,
+                                        ":hover": {
+                                            backgroundColor: hoverColor,
+                                        },
+                                    }}
+                                >
+                                    <Typography
+                                        color={theme.palette.getContrastText(
+                                            backgroundColor as string,
+                                        )}
+                                        fontFamily='"Source Code Pro", monospace'
+                                        fontSize="1.5rem"
+                                    >
+                                        {`>${tool.name}`}
+                                    </Typography>
+                                </Box>
+                            );
+                        })}
+                    </Drawer>
+                </>
+            )}
         </Box>
     );
 };
