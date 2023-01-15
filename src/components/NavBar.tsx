@@ -1,4 +1,16 @@
-import { Box, Typography } from "@mui/material";
+/* eslint-disable sonarjs/no-duplicate-string */
+import { useState } from "react";
+
+import MenuIcon from "@mui/icons-material/Menu";
+import {
+    Box,
+    Drawer,
+    IconButton,
+    Paper,
+    Toolbar,
+    Typography,
+    useMediaQuery,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
 import { Link, useMatch } from "react-router-dom";
@@ -54,6 +66,54 @@ const NavTab = ({
 const NavBar = () => {
     const match = useMatch("/*");
     const theme = useTheme();
+    const isBelowSmallBreakpoint = useMediaQuery(theme.breakpoints.down("sm"));
+
+    const [isResponsiveDrawerOpen, setIsResponsiveDrawerOpen] = useState(false);
+
+    const logoBox = (
+        <Typography
+            color="black"
+            noWrap
+            fontSize="1.6rem"
+            fontWeight="200"
+            fontFamily='"Source Code Pro", monospace'
+        >
+            {"> paul wrubel"}
+        </Typography>
+    );
+
+    const navTabs: {
+        name: string;
+        to: string;
+        selected?: boolean;
+        displayName: string;
+    }[] = [
+        {
+            name: "home",
+            to: "/",
+            selected: match?.pathname === "/",
+            displayName: ">home",
+        },
+        {
+            name: "about",
+            to: "/about",
+            selected: match?.pathname === "/about",
+            displayName: ">about",
+        },
+        {
+            name: "projects",
+            to: "/projects",
+            selected: match?.pathname === "/projects",
+            displayName: ">projects",
+        },
+        {
+            name: "tools",
+            to: "/tools",
+            selected: match?.pathname.startsWith("/tools"),
+            displayName: ">tools",
+        },
+    ];
+
     return (
         <Box
             sx={{
@@ -71,37 +131,112 @@ const NavBar = () => {
                 // overflowX: "hidden",
             }}
         >
-            <Box
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    flexGrow: "1",
-                    height: 1,
-                    p: 2,
-                }}
-            >
-                <Typography
-                    color="black"
-                    noWrap
-                    fontSize="1.6rem"
-                    fontWeight="200"
-                    fontFamily='"Source Code Pro", monospace'
-                >
-                    {"> paul wrubel"}
-                </Typography>
-            </Box>
-            <NavTab selected={match?.pathname === "/"} to="/">
-                {">home"}
-            </NavTab>
-            <NavTab selected={match?.pathname === "/about"} to="/about">
-                {">about"}
-            </NavTab>
-            <NavTab selected={match?.pathname === "/projects"} to="/projects">
-                {">projects"}
-            </NavTab>
-            <NavTab selected={match?.pathname.startsWith("/tools")} to="/tools">
-                {">tools"}
-            </NavTab>
+            {isBelowSmallBreakpoint ? (
+                <>
+                    <IconButton
+                        size="large"
+                        edge="start"
+                        aria-label="menu"
+                        onClick={() => {
+                            setIsResponsiveDrawerOpen(!isResponsiveDrawerOpen);
+                        }}
+                        sx={{ mr: 2, color: "black" }}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            flexDirection: "row",
+                            width: 1,
+                            justifyContent: "flex-end",
+                        }}
+                    >
+                        {logoBox}
+                    </Box>
+                    <Drawer
+                        anchor="left"
+                        open={isResponsiveDrawerOpen}
+                        onClose={() => {
+                            setIsResponsiveDrawerOpen(false);
+                        }}
+                        PaperProps={{
+                            sx: {
+                                width: "60vw",
+                                boxSizing: "border-box",
+                                backgroundImage: "none",
+                                backgroundColor:
+                                    theme.palette.secondary.darkest,
+                                // gap: 1,
+                                // p: "2px",
+                            },
+                        }}
+                    >
+                        <Toolbar />
+                        {navTabs.map(({ name, to, selected, displayName }) => {
+                            const backgroundColor = selected
+                                ? theme.palette.secondary.darker
+                                : theme.palette.secondary.darkest;
+                            const hoverColor = selected
+                                ? theme.palette.secondary.dark
+                                : theme.palette.secondary.darker;
+                            return (
+                                <Box
+                                    key={name}
+                                    component={Link}
+                                    onClick={() => {
+                                        setIsResponsiveDrawerOpen(
+                                            !isResponsiveDrawerOpen,
+                                        );
+                                    }}
+                                    to={to}
+                                    sx={{
+                                        p: 2,
+
+                                        textDecoration: "none",
+
+                                        border: "1px solid #000",
+
+                                        backgroundColor: backgroundColor,
+                                        ":hover": {
+                                            backgroundColor: hoverColor,
+                                        },
+                                    }}
+                                >
+                                    <Typography
+                                        color={theme.palette.getContrastText(
+                                            backgroundColor as string,
+                                        )}
+                                        fontFamily='"Source Code Pro", monospace'
+                                        fontSize="1.5rem"
+                                    >
+                                        {displayName}
+                                    </Typography>
+                                </Box>
+                            );
+                        })}
+                    </Drawer>
+                </>
+            ) : (
+                <>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            flexGrow: "1",
+                            height: 1,
+                            p: isBelowSmallBreakpoint ? 1 : 2,
+                        }}
+                    >
+                        {logoBox}
+                    </Box>
+                    {navTabs.map(({ name, to, selected, displayName }) => (
+                        <NavTab key={name} selected={selected} to={to}>
+                            {displayName}
+                        </NavTab>
+                    ))}
+                </>
+            )}
         </Box>
     );
 };

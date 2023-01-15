@@ -5,7 +5,12 @@ const PRIMARY_MAIN = lightBlue[700];
 const PRIMARY_LIGHTER = lightBlue[300];
 const PRIMARY_LIGHTEST = lightBlue[100];
 
-const SECONDARY = "#888";
+const SECONDARY_DARKEST = "#333";
+const SECONDARY_DARKER = "#444";
+const SECONDARY_MAIN = "#888";
+const SECONDARY_LIGHTER = "#BBB";
+const SECONDARY_LIGHTEST = "#CCC";
+
 const TRIADIC = "#d10289";
 const NEUTRAL = "#DDDDDD";
 
@@ -22,7 +27,11 @@ const Theme = createTheme({
             lightest: PRIMARY_LIGHTEST,
         },
         secondary: {
-            main: SECONDARY,
+            darkest: SECONDARY_DARKEST,
+            darker: SECONDARY_DARKER,
+            main: SECONDARY_MAIN,
+            lighter: SECONDARY_LIGHTER,
+            lightest: SECONDARY_LIGHTEST,
         },
         background: {
             default: BACKGROUND_DEFAULT,
@@ -54,10 +63,14 @@ declare module "@mui/material/styles" {
         neutral: PaletteOptions["primary"];
     }
     interface PaletteColor {
+        darker?: string;
+        darkest?: string;
         lighter?: string;
         lightest?: string;
     }
     interface SimplePaletteColorOptions {
+        darker?: string;
+        darkest?: string;
         lighter?: string;
         lightest?: string;
     }
