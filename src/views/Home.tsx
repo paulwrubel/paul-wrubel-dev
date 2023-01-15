@@ -93,7 +93,6 @@ const Home = ({
         useState(finishedAnim);
 
     const theme = useTheme();
-    const isBelowSmallBreakpoint = useMediaQuery(theme.breakpoints.down("sm"));
     const isBelowMediumBreakpoint = useMediaQuery(theme.breakpoints.down("md"));
 
     const fontSizePrimary = isBelowMediumBreakpoint ? "3rem" : "4rem";

@@ -127,16 +127,16 @@ const getColorFromPower = (p5: p5Types, p: number): p5Types.Color => {
     return p5.color(colorProgression[p % colorProgression.length]);
 };
 
-const getRandomColorFromPower = (p5: p5Types, p: number): p5Types.Color => {
-    const rng = seedrandom(`c${p}`);
-    return p5.color(
-        `hsl(${randRangeInt(0, 360, rng)}, ${randRangeInt(
-            50,
-            100,
-            rng,
-        )}%, ${randRangeInt(50, 70, rng)}%)`,
-    );
-};
+// const getRandomColorFromPower = (p5: p5Types, p: number): p5Types.Color => {
+//     const rng = seedrandom(`c${p}`);
+//     return p5.color(
+//         `hsl(${randRangeInt(0, 360, rng)}, ${randRangeInt(
+//             50,
+//             100,
+//             rng,
+//         )}%, ${randRangeInt(50, 70, rng)}%)`,
+//     );
+// };
 
 const saveToLocalStorage = (p5: p5Types) => {
     const saveData: LocalStorageData = {

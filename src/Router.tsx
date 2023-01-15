@@ -9,7 +9,6 @@ import Home from "views/Home";
 import NotFound from "views/NotFound";
 import Projects from "views/Projects";
 import Tool from "views/Tool";
-import Tools from "views/Tools";
 import ToolsIndex from "views/ToolsIndex";
 
 const Router = () => {

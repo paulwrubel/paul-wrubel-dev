@@ -49,7 +49,6 @@ const Projects = ({
     setFinishedAnim: (arg1: boolean) => void;
 }) => {
     const theme = useTheme();
-    const isBelowSmallBreakpoint = useMediaQuery(theme.breakpoints.down("sm"));
     const isBelowMediumBreakpoint = useMediaQuery(theme.breakpoints.down("md"));
 
     const fontSizePrimary = isBelowMediumBreakpoint ? "1.6rem" : "2rem";
