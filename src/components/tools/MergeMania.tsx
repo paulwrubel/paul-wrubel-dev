@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-small-switch */
 // import { Box } from "@mui/material";
 
 import { useTheme } from "@mui/material";
@@ -8,9 +9,9 @@ import Sketch from "react-p5";
 import seedrandom from "seedrandom";
 
 type LocalStorageData = {
-    minimumPower: number;
+    currentLevel: number;
     blockProgression: Block[];
-    blocks: Block[][];
+    blocks: (Block | null)[][];
 };
 
 type AnimSubject = {
@@ -38,9 +39,19 @@ type Animation = {
     onFinish?: () => void;
 };
 
-type Block = {
-    power?: number;
-} | null;
+type PowerBlock = {
+    type: "power";
+    power: number;
+};
+
+type WildcardBlock = {
+    type: "wildcard";
+    magnitude: number;
+    directions: ("north" | "south" | "east" | "west")[];
+};
+type SpecialBlock = WildcardBlock;
+
+type Block = PowerBlock | SpecialBlock;
 
 /**
  * Constants
@@ -64,6 +75,8 @@ const blockSize = 100 * scalar;
 const padding = 5 * scalar;
 const maxBlockFontSize = 44 * scalar;
 const roundingRadius = 12 * scalar;
+
+const specialBlockOdds = 0.5;
 const colorProgression: string[] = [
     "#BAFF29",
     "#D90DA3",
@@ -104,13 +117,18 @@ const fontString = '"Source Code Pro", monospace';
 
 let ranSetup = false;
 
-let blocks: Block[][] = [...Array(columnCount).keys()].map(() =>
-    [...Array(rowCount).keys()].map(() => null),
+const initialFill: Block | null = null;
+let blocks: (Block | null)[][] = [...Array(columnCount).keys()].map(() =>
+    [...Array(rowCount).keys()].map(() => initialFill),
 );
 let runningAnimations: Animation[] = [];
 let animLock = false;
-let minimumPower = 0;
-let blockProgression: Block[] = [{ power: 0 }, { power: 0 }];
+let currentLevel = 0;
+let blockProgression: Block[] = [
+    { type: "power", power: 0 },
+    { type: "power", power: 0 },
+];
+let gameOver = false;
 
 // const randomRange = (
 //     min: number,
@@ -119,6 +137,21 @@ let blockProgression: Block[] = [{ power: 0 }, { power: 0 }];
 // ): number => {
 //     return (rng?.quick() ?? Math.random()) * (max - min) + min;
 // };
+
+const resetGame = () => {
+    blocks = [...Array(columnCount).keys()].map(() =>
+        [...Array(rowCount).keys()].map(() => initialFill),
+    );
+    runningAnimations = [];
+    animLock = false;
+    currentLevel = 0;
+    blockProgression = [
+        { type: "power", power: 0 },
+        { type: "power", power: 0 },
+    ];
+    gameOver = false;
+    console.log("did a sharp reset, mate!");
+};
 
 const randRangeInt = (
     min: number,
@@ -130,26 +163,9 @@ const randRangeInt = (
     return Math.floor((rng?.quick() ?? Math.random()) * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
 };
 
-const getColorFromBlock = (p5: p5Types, block: Block): p5Types.Color => {
-    return p5.color(
-        colorProgression[(block?.power ?? 0) % colorProgression.length],
-    );
-};
-
-// const getRandomColorFromPower = (p5: p5Types, p: number): p5Types.Color => {
-//     const rng = seedrandom(`c${p}`);
-//     return p5.color(
-//         `hsl(${randRangeInt(0, 360, rng)}, ${randRangeInt(
-//             50,
-//             100,
-//             rng,
-//         )}%, ${randRangeInt(50, 70, rng)}%)`,
-//     );
-// };
-
 const saveToLocalStorage = (p5: p5Types) => {
     const saveData: LocalStorageData = {
-        minimumPower: minimumPower,
+        currentLevel: currentLevel,
         blockProgression: blockProgression,
         blocks: blocks,
     };
@@ -163,38 +179,56 @@ const loadFromLocalStorage = (p5: p5Types) => {
         | null;
 
     if (saveData) {
-        minimumPower = saveData.minimumPower;
+        currentLevel = saveData.currentLevel;
         blockProgression = saveData.blockProgression;
         blocks = saveData.blocks;
     }
 };
 
-const getFormattedBlockText = (block: Block): string => {
-    if (block?.power === undefined || block.power < 0) {
-        return "?";
+const getBlockBackgroundColor = (p5: p5Types, block: Block): p5Types.Color => {
+    switch (block.type) {
+        case "wildcard": {
+            return p5.color("#FFF");
+        }
+        case "power": {
+            return p5.color(
+                colorProgression[block.power % colorProgression.length],
+            );
+        }
     }
-    let symbols = ["", ..."kmgtpezyrq".split("")];
-    let scaledPower = block.power;
-    if (block.power >= symbols.length * 10) {
-        scaledPower = block.power - symbols.length * 10;
+};
 
-        const newSymbolsString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        symbols = [
-            ...newSymbolsString.split(""),
-            ...newSymbolsString
-                .split("")
-                .flatMap((s1) =>
-                    newSymbolsString.split("").map((s2) => s1 + s2),
-                ),
-        ];
+const getFormattedBlockText = (block: Block): string => {
+    switch (block.type) {
+        case "wildcard": {
+            return `*${2 ** block.magnitude}`;
+        }
+        case "power": {
+            let symbols = ["", ..."kmgtpezyrq".split("")];
+            let scaledPower = block.power;
+            if (block.power >= symbols.length * 10) {
+                scaledPower = block.power - symbols.length * 10;
+
+                const newSymbolsString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                symbols = [
+                    ...newSymbolsString.split(""),
+                    ...newSymbolsString
+                        .split("")
+                        .flatMap((s1) =>
+                            newSymbolsString.split("").map((s2) => s1 + s2),
+                        ),
+                ];
+            }
+            const symbol = symbols
+                .slice()
+                .find(
+                    (s, i) =>
+                        scaledPower >= i * 10 && scaledPower - i * 10 < 10,
+                ) as string;
+            const base = 2 ** (scaledPower - 10 * symbols.indexOf(symbol));
+            return `${base}${symbol}`;
+        }
     }
-    const symbol = symbols
-        .slice()
-        .find(
-            (s, i) => scaledPower >= i * 10 && scaledPower - i * 10 < 10,
-        ) as string;
-    const base = 2 ** (scaledPower - 10 * symbols.indexOf(symbol));
-    return `${base}${symbol}`;
 };
 
 const getNextOpenIndexInColumn = (columnIndex: number): number => {
@@ -208,12 +242,20 @@ const addBlockToColumn = (columnIndex: number, block: Block) => {
     }
 };
 
+const selectNextBlockInProgression = (): Block => {
+    if (Math.random() < specialBlockOdds) {
+        return { type: "wildcard", magnitude: 1, directions: ["north"] };
+    }
+    return {
+        type: "power",
+        power: currentLevel + randRangeInt(0, stepsAboveMinimumToDrop),
+    };
+};
+
 const advanceBlockProgression = () => {
     blockProgression = [
         ...blockProgression.slice(1),
-        {
-            power: minimumPower + randRangeInt(0, stepsAboveMinimumToDrop),
-        },
+        selectNextBlockInProgression(),
     ];
 };
 
@@ -223,7 +265,11 @@ const getMaxPowerActive = (): number => {
             Math.max(
                 acc,
                 column.reduce(
-                    (acc2, block) => Math.max(acc2, block?.power ?? -1),
+                    (acc2, block) =>
+                        Math.max(
+                            acc2,
+                            block?.type === "power" ? block.power : 0,
+                        ),
                     0,
                 ),
             ),
@@ -297,7 +343,7 @@ const tryCheckCollapse = (
                     didCollapse = true;
                     animLock = true;
 
-                    const newBlock = column[nextBlockIndex];
+                    const newBlock = column[nextBlockIndex] as Block; // we know this is really a block because findIndex found it
                     const fromGrid = [columnIndex, nextBlockIndex];
                     const toGrid = [columnIndex, index];
 
@@ -335,6 +381,20 @@ const tryCheckCollapse = (
     } else {
         tryCheckMergeSingleStep(p5, activeColumn, onAnimChainFinished);
     }
+};
+
+const getNewBlockOfMergeGroup = (group: number[][]): Block => {
+    const maxPower = group.reduce((acc, loc) => {
+        const block = blocks[loc[0]][loc[1]];
+        if (block && block.type === "power" && block.power > acc) {
+            return block.power;
+        }
+        return acc;
+    }, 0);
+    return {
+        type: "power",
+        power: maxPower + group.length - 1,
+    };
 };
 
 const areAdjacent = (p1: number[], p2: number[]): boolean => {
@@ -429,51 +489,70 @@ const findMergeGroups = () => {
             };
 
             // check north
-            if (
-                index < rowCount - 1 &&
-                column[index + 1]?.power === thisBlock.power &&
-                thisBlock.power !== undefined
-            ) {
-                checkAndAddToGroup(
-                    [columnIndex, index],
-                    [columnIndex, index + 1],
-                );
+            if (index < rowCount - 1) {
+                const otherBlock = column[index + 1];
+                if (
+                    otherBlock &&
+                    ((thisBlock.type === "power" &&
+                        otherBlock.type === "power" &&
+                        otherBlock.power === thisBlock.power) ||
+                        (thisBlock.type === "wildcard" &&
+                            thisBlock.directions.includes("north") &&
+                            otherBlock.type === "power"))
+                ) {
+                    checkAndAddToGroup(
+                        [columnIndex, index],
+                        [columnIndex, index + 1],
+                    );
+                }
             }
 
             // check east
-            if (
-                columnIndex < columnCount - 1 &&
-                blocks[columnIndex + 1][index]?.power === thisBlock.power &&
-                thisBlock.power !== undefined
-            ) {
-                checkAndAddToGroup(
-                    [columnIndex, index],
-                    [columnIndex + 1, index],
-                );
+            if (columnIndex < columnCount - 1) {
+                const otherBlock = blocks[columnIndex + 1][index];
+                if (
+                    otherBlock &&
+                    otherBlock.type === "power" &&
+                    thisBlock.type === "power" &&
+                    otherBlock.power === thisBlock.power
+                ) {
+                    checkAndAddToGroup(
+                        [columnIndex, index],
+                        [columnIndex + 1, index],
+                    );
+                }
             }
 
             // check south
-            if (
-                index > 0 &&
-                column[index - 1]?.power === thisBlock.power &&
-                thisBlock.power !== undefined
-            ) {
-                checkAndAddToGroup(
-                    [columnIndex, index],
-                    [columnIndex, index - 1],
-                );
+            if (index > 0) {
+                const otherBlock = column[index - 1];
+                if (
+                    otherBlock &&
+                    otherBlock.type === "power" &&
+                    thisBlock.type === "power" &&
+                    otherBlock.power === thisBlock.power
+                ) {
+                    checkAndAddToGroup(
+                        [columnIndex, index],
+                        [columnIndex, index - 1],
+                    );
+                }
             }
 
             // check west
-            if (
-                columnIndex > 0 &&
-                blocks[columnIndex - 1][index]?.power === thisBlock.power &&
-                thisBlock.power !== undefined
-            ) {
-                checkAndAddToGroup(
-                    [columnIndex, index],
-                    [columnIndex - 1, index],
-                );
+            if (columnIndex > 0) {
+                const otherBlock = blocks[columnIndex - 1][index];
+                if (
+                    otherBlock &&
+                    otherBlock.type === "power" &&
+                    thisBlock.type === "power" &&
+                    otherBlock.power === thisBlock.power
+                ) {
+                    checkAndAddToGroup(
+                        [columnIndex, index],
+                        [columnIndex - 1, index],
+                    );
+                }
             }
         }
     }
@@ -499,12 +578,7 @@ const tryCheckMergeSingleStep = (
     for (let groupIndex = 0; groupIndex < mergeGroups.length; groupIndex++) {
         const group = mergeGroups[groupIndex];
         const groupCenter = getCenterOfMergeGroup(group, activeColumn);
-        const newBlock = {
-            power:
-                (blocks[groupCenter[0]][groupCenter[1]]?.power as number) +
-                group.length -
-                1,
-        };
+        const newBlock = getNewBlockOfMergeGroup(group);
 
         for (let index = 0; index < group.length; index++) {
             const loc = group[index];
@@ -544,21 +618,19 @@ const tryCheckMergeSingleStep = (
     }
 };
 
-const tryCheckNewMinimumPower = (p5: p5Types) => {
+const tryCheckNewcurrentLevel = (p5: p5Types) => {
     // update the minimum power
-    const newMinimumPower = Math.max(
+    const newcurrentLevel = Math.max(
         getMaxPowerActive() - (stepsAboveMinimumToAdvance - 1),
         0,
     );
-    if (newMinimumPower > minimumPower) {
-        minimumPower = newMinimumPower;
+    if (newcurrentLevel > currentLevel) {
+        currentLevel = newcurrentLevel;
 
         // reset power progression
-        blockProgression = blockProgression.map(() => {
-            return {
-                power: minimumPower + randRangeInt(0, stepsAboveMinimumToDrop),
-            };
-        });
+        blockProgression = blockProgression.map(() =>
+            selectNextBlockInProgression(),
+        );
 
         // remove all on-screen blocks below the new minimum
         let activeColumn = 0;
@@ -568,13 +640,13 @@ const tryCheckNewMinimumPower = (p5: p5Types) => {
             const column = blocks[columnIndex];
             for (let index = 0; index < rowCount; index++) {
                 const block = column[index];
-                if (block?.power !== undefined && block.power < minimumPower) {
+                if (block?.type === "power" && block.power < currentLevel) {
                     removedAnyBlock = true;
                     // we'll just set it to whichever one we saw last, because why not
                     activeColumn = columnIndex;
                     // this is the removal animation
                     subjects.push({
-                        block: blocks[columnIndex][index],
+                        block: block,
                         startGridPos: [columnIndex, index],
                         endGridPos: [columnIndex + 0.5, index - 0.5],
                         startSize: 1.0,
@@ -634,16 +706,16 @@ const MergeMania = () => {
     ) => {
         p5.frameCount;
         if (block) {
+            const actualBlockSize = blockSize * sizeMultiplier;
+            const blockCenter = [
+                x + (sizeMultiplier * blockSize) / 2,
+                y + (sizeMultiplier * blockSize) / 2,
+            ];
+
             // draw block background
-            const bgColor = getColorFromBlock(p5, block);
+            const bgColor = getBlockBackgroundColor(p5, block);
             p5.fill(bgColor);
-            p5.rect(
-                x,
-                y,
-                sizeMultiplier * blockSize,
-                sizeMultiplier * blockSize,
-                roundingRadius,
-            );
+            p5.rect(x, y, actualBlockSize, actualBlockSize, roundingRadius);
 
             // draw text
             const blockText = getFormattedBlockText(block);
@@ -657,15 +729,29 @@ const MergeMania = () => {
             const blockPreSize = maxBlockFontSize * sizeMultiplier;
             p5.textSize(blockPreSize);
             const fontSizeMultiplier = Math.min(
-                (blockSize * sizeMultiplier * 0.9) / p5.textWidth(blockText),
+                (actualBlockSize * 0.9) / p5.textWidth(blockText),
                 1,
             );
             p5.textSize(blockPreSize * fontSizeMultiplier);
-            p5.text(
-                blockText,
-                x + (sizeMultiplier * blockSize) / 2,
-                y + (sizeMultiplier * blockSize) / 2,
-            );
+            p5.text(blockText, blockCenter[0], blockCenter[1]);
+
+            // draw wildcard block features
+            if (block.type === "wildcard") {
+                const triangleHeight = 0.1 * actualBlockSize;
+                const triangleWidth = 0.1 * actualBlockSize;
+
+                p5.push();
+                p5.translate(blockCenter[0], blockCenter[1]);
+                if (block.directions.includes("north")) {
+                    const a = [0, -actualBlockSize * 0.4];
+                    const b = [a[0] - triangleWidth / 2, a[1] + triangleHeight];
+                    const c = [a[0] + triangleWidth / 2, a[1] + triangleHeight];
+                    p5.fill(p5.color("#000"));
+                    p5.triangle(a[0], a[1], b[0], b[1], c[0], c[1]);
+                    p5.rotate(p5.HALF_PI); // 90 degrees
+                }
+                p5.pop();
+            }
         }
     };
 
@@ -681,6 +767,10 @@ const MergeMania = () => {
     };
 
     const mouseClicked = (p5: p5Types) => {
+        if (gameOver) {
+            resetGame();
+            return;
+        }
         for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
             if (
                 !animLock &&
@@ -726,7 +816,7 @@ const MergeMania = () => {
                         advanceBlockProgression();
                         animLock = false;
                         tryCheckMergeSingleStep(p5, columnIndex, () => {
-                            tryCheckNewMinimumPower(p5);
+                            tryCheckNewcurrentLevel(p5);
                             saveToLocalStorage(p5);
                         });
                     },
@@ -749,7 +839,7 @@ const MergeMania = () => {
         p5.background(p5.color("#000"));
 
         // draw the level
-        const levelText = `Lvl ${minimumPower}`;
+        const levelText = `Lvl ${currentLevel}`;
         p5.fill(p5.color("#FFF"));
         p5.textAlign(p5.LEFT, p5.TOP);
         p5.textSize(28 * scalar);
@@ -771,7 +861,7 @@ const MergeMania = () => {
             p5,
             4.5,
             6,
-            { power: minimumPower + stepsAboveMinimumToAdvance },
+            { type: "power", power: currentLevel + stepsAboveMinimumToAdvance },
             0.5,
         );
 
@@ -795,12 +885,10 @@ const MergeMania = () => {
         // draw power blocks
         for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
             for (let index = 0; index < rowCount; index++) {
-                drawPowerBlockAtGridLocation(
-                    p5,
-                    columnIndex,
-                    index,
-                    blocks[columnIndex][index],
-                );
+                const block = blocks[columnIndex][index];
+                if (block) {
+                    drawPowerBlockAtGridLocation(p5, columnIndex, index, block);
+                }
             }
         }
 
@@ -844,6 +932,46 @@ const MergeMania = () => {
                 animation.onFinish?.();
             }
         });
+
+        // check gameover conditions
+        if (
+            runningAnimations.length === 0 && // nothing is moving
+            blocks.flat(1).every((block) => block) // and all slots are full
+        ) {
+            // you lose!
+            gameOver = true;
+        }
+
+        // write gameover graphics
+        if (gameOver) {
+            // box
+            p5.fill(p5.color("#000E"));
+            p5.rect(20, 20, width - 40, height - 40, 10);
+
+            // game over!
+            p5.textAlign(p5.CENTER);
+            p5.fill(p5.color("#FFF"));
+            p5.textSize(42);
+            p5.text("Game Over!", 30, 30, width - 60, 30 + 100);
+
+            // final score
+            p5.textAlign(p5.CENTER);
+            p5.fill(p5.color("#FFF"));
+            p5.textSize(28);
+            p5.text(`Highest level: ${currentLevel}`, 30, 200, width - 60, 200);
+
+            // restart text
+            p5.textAlign(p5.CENTER);
+            p5.fill(p5.color("#FFF"));
+            p5.textSize(36);
+            p5.text(
+                "Click or touch anywhere to restart",
+                30,
+                500,
+                width - 60,
+                200,
+            );
+        }
     };
 
     return <Sketch setup={setup} draw={draw} mouseClicked={mouseClicked} />;
