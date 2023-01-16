@@ -9,12 +9,12 @@ import seedrandom from "seedrandom";
 
 type LocalStorageData = {
     minimumPower: number;
-    powerProgression: number[];
-    columnPowers: number[][];
+    blockProgression: Block[];
+    blocks: Block[][];
 };
 
 type AnimSubject = {
-    power: number;
+    block: Block;
     startPos: number[];
     endPos: number[];
     startSize: number;
@@ -22,7 +22,7 @@ type AnimSubject = {
 };
 
 type AnimGridSubject = {
-    power: number;
+    block: Block;
     startGridPos: number[];
     endGridPos: number[];
     startSize: number;
@@ -37,6 +37,10 @@ type Animation = {
     curveFunc: Bezier.EasingFunction;
     onFinish?: () => void;
 };
+
+type Block = {
+    power?: number;
+} | null;
 
 /**
  * Constants
@@ -100,13 +104,13 @@ const fontString = '"Source Code Pro", monospace';
 
 let ranSetup = false;
 
-let columnPowers: number[][] = [...Array(columnCount).keys()].map(() =>
-    [...Array(rowCount).keys()].map(() => -1),
+let blocks: Block[][] = [...Array(columnCount).keys()].map(() =>
+    [...Array(rowCount).keys()].map(() => null),
 );
 let runningAnimations: Animation[] = [];
 let animLock = false;
-let minimumPower = 33;
-let powerProgression = [0, 0];
+let minimumPower = 0;
+let blockProgression: Block[] = [{ power: 0 }, { power: 0 }];
 
 // const randomRange = (
 //     min: number,
@@ -126,8 +130,10 @@ const randRangeInt = (
     return Math.floor((rng?.quick() ?? Math.random()) * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
 };
 
-const getColorFromPower = (p5: p5Types, p: number): p5Types.Color => {
-    return p5.color(colorProgression[p % colorProgression.length]);
+const getColorFromBlock = (p5: p5Types, block: Block): p5Types.Color => {
+    return p5.color(
+        colorProgression[(block?.power ?? 0) % colorProgression.length],
+    );
 };
 
 // const getRandomColorFromPower = (p5: p5Types, p: number): p5Types.Color => {
@@ -144,8 +150,8 @@ const getColorFromPower = (p5: p5Types, p: number): p5Types.Color => {
 const saveToLocalStorage = (p5: p5Types) => {
     const saveData: LocalStorageData = {
         minimumPower: minimumPower,
-        powerProgression: powerProgression,
-        columnPowers: columnPowers,
+        blockProgression: blockProgression,
+        blocks: blocks,
     };
     p5.storeItem(localStorageKey, saveData);
 };
@@ -158,16 +164,19 @@ const loadFromLocalStorage = (p5: p5Types) => {
 
     if (saveData) {
         minimumPower = saveData.minimumPower;
-        powerProgression = saveData.powerProgression;
-        columnPowers = saveData.columnPowers;
+        blockProgression = saveData.blockProgression;
+        blocks = saveData.blocks;
     }
 };
 
-const getFormattedBlockText = (power: number): string => {
+const getFormattedBlockText = (block: Block): string => {
+    if (block?.power === undefined || block.power < 0) {
+        return "?";
+    }
     let symbols = ["", ..."kmgtpezyrq".split("")];
-    let scaledPower = power;
-    if (power >= symbols.length * 10) {
-        scaledPower = power - symbols.length * 10;
+    let scaledPower = block.power;
+    if (block.power >= symbols.length * 10) {
+        scaledPower = block.power - symbols.length * 10;
 
         const newSymbolsString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         symbols = [
@@ -189,29 +198,34 @@ const getFormattedBlockText = (power: number): string => {
 };
 
 const getNextOpenIndexInColumn = (columnIndex: number): number => {
-    return columnPowers[columnIndex].findIndex((p) => p === -1);
+    return blocks[columnIndex].findIndex((block) => block === null);
 };
 
-const addPowerToColumn = (columnIndex: number, power: number) => {
+const addBlockToColumn = (columnIndex: number, block: Block) => {
     const index = getNextOpenIndexInColumn(columnIndex);
     if (index !== -1) {
-        columnPowers[columnIndex][index] = power;
+        blocks[columnIndex][index] = block;
     }
 };
 
-const advancePowerProgression = () => {
-    powerProgression = [
-        ...powerProgression.slice(1),
-        minimumPower + randRangeInt(0, stepsAboveMinimumToDrop),
+const advanceBlockProgression = () => {
+    blockProgression = [
+        ...blockProgression.slice(1),
+        {
+            power: minimumPower + randRangeInt(0, stepsAboveMinimumToDrop),
+        },
     ];
 };
 
 const getMaxPowerActive = (): number => {
-    return columnPowers.reduce(
+    return blocks.reduce(
         (acc, column) =>
             Math.max(
                 acc,
-                column.reduce((acc2, p) => Math.max(acc2, p), 0),
+                column.reduce(
+                    (acc2, block) => Math.max(acc2, block?.power ?? -1),
+                    0,
+                ),
             ),
         0,
     );
@@ -233,7 +247,7 @@ const addBlockAnimation = (
 ) => {
     const trueSubjects: AnimSubject[] = subjects.map((subject) => {
         return {
-            power: subject.power,
+            block: subject.block,
             startPos: actualCoordinatesFromGrid(subject.startGridPos),
             endPos: actualCoordinatesFromGrid(subject.endGridPos),
             startSize: subject.startSize,
@@ -269,25 +283,26 @@ const tryCheckCollapse = (
     const subjects: AnimGridSubject[] = [];
     const onFinishFunctions: (() => void)[] = [];
     for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-        const column = columnPowers[columnIndex];
+        const column = blocks[columnIndex];
         for (let index = 0; index < rowCount; index++) {
-            if (column[index] === -1) {
+            const block = column[index];
+            if (!block) {
                 // there's no block at this position!
                 // find the position of the next block above this one
                 const nextBlockIndex = column.findIndex(
-                    (p, i) => i > index && p !== -1,
+                    (block, i) => i > index && block,
                 );
                 if (nextBlockIndex !== -1) {
                     // we have a block and a place to move it
                     didCollapse = true;
                     animLock = true;
 
-                    const newPower = column[nextBlockIndex];
+                    const newBlock = column[nextBlockIndex];
                     const fromGrid = [columnIndex, nextBlockIndex];
                     const toGrid = [columnIndex, index];
 
                     subjects.push({
-                        power: newPower,
+                        block: newBlock,
                         startGridPos: fromGrid,
                         endGridPos: toGrid,
                         startSize: 1.0,
@@ -295,11 +310,11 @@ const tryCheckCollapse = (
                     });
 
                     onFinishFunctions.push(() => {
-                        columnPowers[columnIndex][index] = newPower;
+                        blocks[columnIndex][index] = newBlock;
                     });
 
                     // post add procedure
-                    columnPowers[columnIndex][nextBlockIndex] = -1;
+                    blocks[columnIndex][nextBlockIndex] = null;
                 }
             }
         }
@@ -378,12 +393,12 @@ const getCenterOfMergeGroup = (
 const findMergeGroups = () => {
     const mergeGroups: number[][][] = [];
     for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-        const column = columnPowers[columnIndex];
+        const column = blocks[columnIndex];
         for (let index = 0; index < rowCount; index++) {
-            const thisPower = column[index];
+            const thisBlock = column[index];
 
             // if this spot is empty, move on
-            if (thisPower === -1) {
+            if (!thisBlock) {
                 continue;
             }
 
@@ -414,7 +429,11 @@ const findMergeGroups = () => {
             };
 
             // check north
-            if (index < rowCount - 1 && column[index + 1] === thisPower) {
+            if (
+                index < rowCount - 1 &&
+                column[index + 1]?.power === thisBlock.power &&
+                thisBlock.power !== undefined
+            ) {
                 checkAndAddToGroup(
                     [columnIndex, index],
                     [columnIndex, index + 1],
@@ -424,7 +443,8 @@ const findMergeGroups = () => {
             // check east
             if (
                 columnIndex < columnCount - 1 &&
-                columnPowers[columnIndex + 1][index] === thisPower
+                blocks[columnIndex + 1][index]?.power === thisBlock.power &&
+                thisBlock.power !== undefined
             ) {
                 checkAndAddToGroup(
                     [columnIndex, index],
@@ -433,7 +453,11 @@ const findMergeGroups = () => {
             }
 
             // check south
-            if (index > 0 && column[index - 1] === thisPower) {
+            if (
+                index > 0 &&
+                column[index - 1]?.power === thisBlock.power &&
+                thisBlock.power !== undefined
+            ) {
                 checkAndAddToGroup(
                     [columnIndex, index],
                     [columnIndex, index - 1],
@@ -443,7 +467,8 @@ const findMergeGroups = () => {
             // check west
             if (
                 columnIndex > 0 &&
-                columnPowers[columnIndex - 1][index] === thisPower
+                blocks[columnIndex - 1][index]?.power === thisBlock.power &&
+                thisBlock.power !== undefined
             ) {
                 checkAndAddToGroup(
                     [columnIndex, index],
@@ -474,8 +499,12 @@ const tryCheckMergeSingleStep = (
     for (let groupIndex = 0; groupIndex < mergeGroups.length; groupIndex++) {
         const group = mergeGroups[groupIndex];
         const groupCenter = getCenterOfMergeGroup(group, activeColumn);
-        const newPower =
-            columnPowers[groupCenter[0]][groupCenter[1]] + group.length - 1;
+        const newBlock = {
+            power:
+                (blocks[groupCenter[0]][groupCenter[1]]?.power as number) +
+                group.length -
+                1,
+        };
 
         for (let index = 0; index < group.length; index++) {
             const loc = group[index];
@@ -484,17 +513,17 @@ const tryCheckMergeSingleStep = (
                 continue;
             }
             subjects.push({
-                power: newPower,
+                block: newBlock,
                 startGridPos: loc,
                 endGridPos: groupCenter,
                 startSize: 1.0,
                 endSize: 1.0,
             });
-            columnPowers[loc[0]][loc[1]] = -1;
+            blocks[loc[0]][loc[1]] = null;
         }
 
         onFinishFunctions.push(() => {
-            columnPowers[groupCenter[0]][groupCenter[1]] = newPower;
+            blocks[groupCenter[0]][groupCenter[1]] = newBlock;
         });
     }
     if (mergeGroups.length > 0) {
@@ -525,32 +554,34 @@ const tryCheckNewMinimumPower = (p5: p5Types) => {
         minimumPower = newMinimumPower;
 
         // reset power progression
-        powerProgression = powerProgression.map(
-            () => minimumPower + randRangeInt(0, stepsAboveMinimumToDrop),
-        );
+        blockProgression = blockProgression.map(() => {
+            return {
+                power: minimumPower + randRangeInt(0, stepsAboveMinimumToDrop),
+            };
+        });
 
         // remove all on-screen blocks below the new minimum
         let activeColumn = 0;
         let removedAnyBlock = false;
         const subjects: AnimGridSubject[] = [];
         for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-            const column = columnPowers[columnIndex];
+            const column = blocks[columnIndex];
             for (let index = 0; index < rowCount; index++) {
-                const power = column[index];
-                if (power !== -1 && power < minimumPower) {
+                const block = column[index];
+                if (block?.power !== undefined && block.power < minimumPower) {
                     removedAnyBlock = true;
                     // we'll just set it to whichever one we saw last, because why not
                     activeColumn = columnIndex;
                     // this is the removal animation
                     subjects.push({
-                        power: columnPowers[columnIndex][index],
+                        block: blocks[columnIndex][index],
                         startGridPos: [columnIndex, index],
                         endGridPos: [columnIndex + 0.5, index - 0.5],
                         startSize: 1.0,
                         endSize: 0.0,
                     });
                     // just immediately remove it on-record
-                    columnPowers[columnIndex][index] = -1;
+                    blocks[columnIndex][index] = null;
                 }
             }
         }
@@ -598,13 +629,13 @@ const MergeMania = () => {
         p5: p5Types,
         x: number,
         y: number,
-        power: number,
+        block: Block,
         sizeMultiplier = 1.0,
     ) => {
         p5.frameCount;
-        if (power >= 0) {
+        if (block) {
             // draw block background
-            const bgColor = getColorFromPower(p5, power);
+            const bgColor = getColorFromBlock(p5, block);
             p5.fill(bgColor);
             p5.rect(
                 x,
@@ -615,7 +646,7 @@ const MergeMania = () => {
             );
 
             // draw text
-            const blockText = getFormattedBlockText(power);
+            const blockText = getFormattedBlockText(block);
             p5.fill(
                 p5.color(
                     theme.palette.getContrastText(bgColor.toString("#rrggbb")),
@@ -642,11 +673,11 @@ const MergeMania = () => {
         p5: p5Types,
         x: number,
         y: number,
-        power: number,
+        block: Block,
         sizeMultiplier = 1.0,
     ) => {
         const [actualX, actualY] = actualCoordinatesFromGrid([x, y]);
-        drawPowerBlock(p5, actualX, actualY, power, sizeMultiplier);
+        drawPowerBlock(p5, actualX, actualY, block, sizeMultiplier);
     };
 
     const mouseClicked = (p5: p5Types) => {
@@ -654,43 +685,33 @@ const MergeMania = () => {
             if (
                 !animLock &&
                 mouseIsOverColumnRect(p5, columnIndex) &&
-                columnPowers[columnIndex].some((p) => p === -1)
+                blocks[columnIndex].some((block) => !block)
             ) {
                 animLock = true;
                 const endGridPosY = getNextOpenIndexInColumn(columnIndex);
 
-                const newPower = powerProgression[0];
+                const newBlock = blockProgression[0];
                 const fromGrid = [columnIndex, 5];
                 const toGrid = [columnIndex, endGridPosY];
 
-                const powerProgressionCopy = powerProgression.slice();
+                const blockProgressionCopy = blockProgression.slice();
                 // advancePowerProgression();
-                powerProgression = [];
+                blockProgression = [];
                 // powerProgression[powerProgressionCopy.length - 1] =
                 addBlockAnimation(
                     p5,
                     [
                         // the block we are adding
                         {
-                            power: newPower,
+                            block: newBlock,
                             startGridPos: fromGrid,
                             endGridPos: toGrid,
                             startSize: 1.0,
                             endSize: 1.0,
                         },
                         // the power progression indicator block
-
-                        // drawPowerBlockAtGridLocation(p5, 1.5, 6, powerProgression[0]);
-                        // drawPowerBlockAtGridLocation(
-                        //     p5,
-                        //     2.5,
-                        //     6,
-                        //     powerProgression[1],
-                        //     blockSize * 0.8,
-                        // );
-
                         {
-                            power: powerProgressionCopy[1],
+                            block: blockProgressionCopy[1],
                             startGridPos: [2.5, 6],
                             endGridPos: [1.5, 6],
                             startSize: 0.8,
@@ -700,9 +721,9 @@ const MergeMania = () => {
                     newBlockAnimationDurationMillis,
                     newBlockAnimationCurveFunction,
                     () => {
-                        addPowerToColumn(columnIndex, newPower);
-                        powerProgression = powerProgressionCopy;
-                        advancePowerProgression();
+                        addBlockToColumn(columnIndex, newBlock);
+                        blockProgression = blockProgressionCopy;
+                        advanceBlockProgression();
                         animLock = false;
                         tryCheckMergeSingleStep(p5, columnIndex, () => {
                             tryCheckNewMinimumPower(p5);
@@ -736,8 +757,8 @@ const MergeMania = () => {
         p5.text(levelText, 10 * scalar, 10 * scalar);
 
         // draw the current powerblock progression
-        drawPowerBlockAtGridLocation(p5, 1.5, 6, powerProgression[0]);
-        drawPowerBlockAtGridLocation(p5, 2.5, 6, powerProgression[1], 0.8);
+        drawPowerBlockAtGridLocation(p5, 1.5, 6, blockProgression[0]);
+        drawPowerBlockAtGridLocation(p5, 2.5, 6, blockProgression[1], 0.8);
 
         // draw the goal powerblock for reference
         p5.fill(p5.color("#FFF"));
@@ -750,7 +771,7 @@ const MergeMania = () => {
             p5,
             4.5,
             6,
-            minimumPower + stepsAboveMinimumToAdvance,
+            { power: minimumPower + stepsAboveMinimumToAdvance },
             0.5,
         );
 
@@ -778,7 +799,7 @@ const MergeMania = () => {
                     p5,
                     columnIndex,
                     index,
-                    columnPowers[columnIndex][index],
+                    blocks[columnIndex][index],
                 );
             }
         }
@@ -816,7 +837,7 @@ const MergeMania = () => {
                     subject.startSize,
                     subject.endSize,
                 );
-                drawPowerBlock(p5, x, y, subject.power, size);
+                drawPowerBlock(p5, x, y, subject.block, size);
             });
 
             if (p5.frameCount >= animation.endTime) {
