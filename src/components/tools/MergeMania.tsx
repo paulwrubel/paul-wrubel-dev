@@ -58,6 +58,7 @@ const height = preHeight * scalar;
 // blocks
 const blockSize = 100 * scalar;
 const padding = 5 * scalar;
+const maxBlockFontSize = 44 * scalar;
 const roundingRadius = 12 * scalar;
 const colorProgression: string[] = [
     "#BAFF29",
@@ -104,7 +105,7 @@ let columnPowers: number[][] = [...Array(columnCount).keys()].map(() =>
 );
 let runningAnimations: Animation[] = [];
 let animLock = false;
-let minimumPower = 24;
+let minimumPower = 33;
 let powerProgression = [0, 0];
 
 // const randomRange = (
@@ -289,8 +290,8 @@ const tryCheckCollapse = (
                         power: newPower,
                         startGridPos: fromGrid,
                         endGridPos: toGrid,
-                        startSize: blockSize,
-                        endSize: blockSize,
+                        startSize: 1.0,
+                        endSize: 1.0,
                     });
 
                     onFinishFunctions.push(() => {
@@ -486,8 +487,8 @@ const tryCheckMergeSingleStep = (
                 power: newPower,
                 startGridPos: loc,
                 endGridPos: groupCenter,
-                startSize: blockSize,
-                endSize: blockSize,
+                startSize: 1.0,
+                endSize: 1.0,
             });
             columnPowers[loc[0]][loc[1]] = -1;
         }
@@ -545,8 +546,8 @@ const tryCheckNewMinimumPower = (p5: p5Types) => {
                         power: columnPowers[columnIndex][index],
                         startGridPos: [columnIndex, index],
                         endGridPos: [columnIndex + 0.5, index - 0.5],
-                        startSize: blockSize,
-                        endSize: 0,
+                        startSize: 1.0,
+                        endSize: 0.0,
                     });
                     // just immediately remove it on-record
                     columnPowers[columnIndex][index] = -1;
@@ -598,14 +599,20 @@ const MergeMania = () => {
         x: number,
         y: number,
         power: number,
-        size: number = blockSize,
+        sizeMultiplier = 1.0,
     ) => {
         p5.frameCount;
         if (power >= 0) {
             // draw block background
             const bgColor = getColorFromPower(p5, power);
             p5.fill(bgColor);
-            p5.rect(x, y, size, size, roundingRadius);
+            p5.rect(
+                x,
+                y,
+                sizeMultiplier * blockSize,
+                sizeMultiplier * blockSize,
+                roundingRadius,
+            );
 
             // draw text
             const blockText = getFormattedBlockText(power);
@@ -615,9 +622,19 @@ const MergeMania = () => {
                 ),
             );
             p5.textAlign(p5.CENTER, p5.CENTER);
-            p5.textSize(40 * (size / blockSize) * scalar);
             p5.textFont(fontString);
-            p5.text(blockText, x + size / 2, y + size / 2);
+            const blockPreSize = maxBlockFontSize * sizeMultiplier;
+            p5.textSize(blockPreSize);
+            const fontSizeMultiplier = Math.min(
+                (blockSize * sizeMultiplier * 0.9) / p5.textWidth(blockText),
+                1,
+            );
+            p5.textSize(blockPreSize * fontSizeMultiplier);
+            p5.text(
+                blockText,
+                x + (sizeMultiplier * blockSize) / 2,
+                y + (sizeMultiplier * blockSize) / 2,
+            );
         }
     };
 
@@ -626,10 +643,10 @@ const MergeMania = () => {
         x: number,
         y: number,
         power: number,
-        size: number = blockSize,
+        sizeMultiplier = 1.0,
     ) => {
         const [actualX, actualY] = actualCoordinatesFromGrid([x, y]);
-        drawPowerBlock(p5, actualX, actualY, power, size);
+        drawPowerBlock(p5, actualX, actualY, power, sizeMultiplier);
     };
 
     const mouseClicked = (p5: p5Types) => {
@@ -658,8 +675,8 @@ const MergeMania = () => {
                             power: newPower,
                             startGridPos: fromGrid,
                             endGridPos: toGrid,
-                            startSize: blockSize,
-                            endSize: blockSize,
+                            startSize: 1.0,
+                            endSize: 1.0,
                         },
                         // the power progression indicator block
 
@@ -676,8 +693,8 @@ const MergeMania = () => {
                             power: powerProgressionCopy[1],
                             startGridPos: [2.5, 6],
                             endGridPos: [1.5, 6],
-                            startSize: blockSize * 0.8,
-                            endSize: blockSize,
+                            startSize: 0.8,
+                            endSize: 1.0,
                         },
                     ],
                     newBlockAnimationDurationMillis,
@@ -711,7 +728,7 @@ const MergeMania = () => {
         p5.background(p5.color("#000"));
 
         // draw the level
-        const levelText = `Lvl ${minimumPower + 1}`;
+        const levelText = `Lvl ${minimumPower}`;
         p5.fill(p5.color("#FFF"));
         p5.textAlign(p5.LEFT, p5.TOP);
         p5.textSize(28 * scalar);
@@ -720,13 +737,7 @@ const MergeMania = () => {
 
         // draw the current powerblock progression
         drawPowerBlockAtGridLocation(p5, 1.5, 6, powerProgression[0]);
-        drawPowerBlockAtGridLocation(
-            p5,
-            2.5,
-            6,
-            powerProgression[1],
-            blockSize * 0.8,
-        );
+        drawPowerBlockAtGridLocation(p5, 2.5, 6, powerProgression[1], 0.8);
 
         // draw the goal powerblock for reference
         p5.fill(p5.color("#FFF"));
@@ -740,7 +751,7 @@ const MergeMania = () => {
             4.5,
             6,
             minimumPower + stepsAboveMinimumToAdvance,
-            blockSize * 0.5,
+            0.5,
         );
 
         // draw the columns
