@@ -765,6 +765,7 @@ const isWildcardBlockPositionValid = ({ x, y }: Location): boolean => {
     return hasValidMergeOption;
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 const getWildcardBlocksInClosedLoop = (): Location[] => {
     let connectedSpecialGroups: Location[][] = [];
     for (let x = 0; x < columnCount; x++) {
