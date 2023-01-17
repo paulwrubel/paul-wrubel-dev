@@ -16,16 +16,16 @@ type LocalStorageData = {
 
 type AnimSubject = {
     block: Block;
-    startPos: number[];
-    endPos: number[];
+    startPos: Location;
+    endPos: Location;
     startSize: number;
     endSize: number;
 };
 
 type AnimGridSubject = {
     block: Block;
-    startGridPos: number[];
-    endGridPos: number[];
+    startGridPos: Location;
+    endGridPos: Location;
     startSize: number;
     endSize: number;
 };
@@ -39,15 +39,22 @@ type Animation = {
     onFinish?: () => void;
 };
 
+type Location = {
+    x: number;
+    y: number;
+};
+
 type PowerBlock = {
     type: "power";
     power: number;
 };
 
+type CardinalDirection = "north" | "south" | "east" | "west";
+
 type WildcardBlock = {
     type: "wildcard";
     magnitude: number;
-    directions: ("north" | "south" | "east" | "west")[];
+    directions: CardinalDirection[];
 };
 type SpecialBlock = WildcardBlock;
 
@@ -76,7 +83,7 @@ const padding = 5 * scalar;
 const maxBlockFontSize = 44 * scalar;
 const roundingRadius = 12 * scalar;
 
-const specialBlockOdds = 0.5;
+const specialBlockOdds = 0.03;
 const colorProgression: string[] = [
     "#BAFF29",
     "#D90DA3",
@@ -104,8 +111,8 @@ const removeBlockAnimationDurationMillis = 500;
 const removeBlockAnimationCurveFunction = Bezier(0.6, 1, 0, 1);
 
 // progressiong settings
-const stepsAboveMinimumToAdvance = 8;
-const stepsAboveMinimumToDrop = 3;
+const stepsAboveMinimumToAdvance = 9;
+const stepsAboveMinimumToDrop = 4;
 
 // misc
 const localStorageKey = "mergemania";
@@ -137,6 +144,23 @@ let gameOver = false;
 // ): number => {
 //     return (rng?.quick() ?? Math.random()) * (max - min) + min;
 // };
+
+const randomCherryPickFromArray = <T,>(array: T[], quantity: number): T[] => {
+    if (quantity < 1) {
+        return [];
+    }
+
+    const randIndex = randRangeInt(0, array.length - 1);
+    const cherryPick = array[randIndex];
+
+    const subtractedArray = array.slice();
+    subtractedArray.splice(randIndex, 1);
+
+    return [
+        cherryPick,
+        ...randomCherryPickFromArray(subtractedArray, quantity - 1),
+    ];
+};
 
 const resetGame = () => {
     blocks = [...Array(columnCount).keys()].map(() =>
@@ -188,7 +212,10 @@ const loadFromLocalStorage = (p5: p5Types) => {
 const getBlockBackgroundColor = (p5: p5Types, block: Block): p5Types.Color => {
     switch (block.type) {
         case "wildcard": {
-            return p5.color("#FFF");
+            // return p5.color("#FFF");
+            return p5.color(
+                colorProgression[block.magnitude % colorProgression.length],
+            );
         }
         case "power": {
             return p5.color(
@@ -201,7 +228,7 @@ const getBlockBackgroundColor = (p5: p5Types, block: Block): p5Types.Color => {
 const getFormattedBlockText = (block: Block): string => {
     switch (block.type) {
         case "wildcard": {
-            return `*${2 ** block.magnitude}`;
+            return `${2 ** block.magnitude}`;
         }
         case "power": {
             let symbols = ["", ..."kmgtpezyrq".split("")];
@@ -231,20 +258,29 @@ const getFormattedBlockText = (block: Block): string => {
     }
 };
 
-const getNextOpenIndexInColumn = (columnIndex: number): number => {
-    return blocks[columnIndex].findIndex((block) => block === null);
+const getNextOpenIndexInColumn = (x: number): number => {
+    return blocks[x].findIndex((block) => block === null);
 };
 
-const addBlockToColumn = (columnIndex: number, block: Block) => {
-    const index = getNextOpenIndexInColumn(columnIndex);
-    if (index !== -1) {
-        blocks[columnIndex][index] = block;
+const addBlockToColumn = (x: number, block: Block) => {
+    const y = getNextOpenIndexInColumn(x);
+    if (y !== -1) {
+        blocks[x][y] = block;
     }
 };
 
 const selectNextBlockInProgression = (): Block => {
     if (Math.random() < specialBlockOdds) {
-        return { type: "wildcard", magnitude: 1, directions: ["north"] };
+        const magSample = Math.random();
+        const magnitude = magSample < 0.6 ? 0 : magSample < 0.9 ? 1 : 2;
+        return {
+            type: "wildcard",
+            magnitude: magnitude,
+            directions: randomCherryPickFromArray(
+                ["north", "south", "east", "west"],
+                randRangeInt(1, 4),
+            ),
+        };
     }
     return {
         type: "power",
@@ -277,11 +313,11 @@ const getMaxPowerActive = (): number => {
     );
 };
 
-const actualCoordinatesFromGrid = ([x, y]: number[]): number[] => {
-    return [
-        padding + padding * x + blockSize * x,
-        height - (padding * (y + 1) + blockSize * (y + 1)),
-    ];
+const actualLocationFromGrid = ({ x, y }: Location): Location => {
+    return {
+        x: padding + padding * x + blockSize * x,
+        y: height - (padding * (y + 1) + blockSize * (y + 1)),
+    };
 };
 
 const addBlockAnimation = (
@@ -294,8 +330,8 @@ const addBlockAnimation = (
     const trueSubjects: AnimSubject[] = subjects.map((subject) => {
         return {
             block: subject.block,
-            startPos: actualCoordinatesFromGrid(subject.startGridPos),
-            endPos: actualCoordinatesFromGrid(subject.endGridPos),
+            startPos: actualLocationFromGrid(subject.startGridPos),
+            endPos: actualLocationFromGrid(subject.endGridPos),
             startSize: subject.startSize,
             endSize: subject.endSize,
         };
@@ -328,24 +364,24 @@ const tryCheckCollapse = (
     let didCollapse = false;
     const subjects: AnimGridSubject[] = [];
     const onFinishFunctions: (() => void)[] = [];
-    for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-        const column = blocks[columnIndex];
-        for (let index = 0; index < rowCount; index++) {
-            const block = column[index];
+    for (let x = 0; x < columnCount; x++) {
+        const column = blocks[x];
+        for (let y = 0; y < rowCount; y++) {
+            const block = column[y];
             if (!block) {
                 // there's no block at this position!
                 // find the position of the next block above this one
-                const nextBlockIndex = column.findIndex(
-                    (block, i) => i > index && block,
+                const nextBlockY = column.findIndex(
+                    (block, i) => i > y && block,
                 );
-                if (nextBlockIndex !== -1) {
+                if (nextBlockY !== -1) {
                     // we have a block and a place to move it
                     didCollapse = true;
                     animLock = true;
 
-                    const newBlock = column[nextBlockIndex] as Block; // we know this is really a block because findIndex found it
-                    const fromGrid = [columnIndex, nextBlockIndex];
-                    const toGrid = [columnIndex, index];
+                    const newBlock = column[nextBlockY] as Block; // we know this is really a block because findIndex found it
+                    const fromGrid = { x: x, y: nextBlockY };
+                    const toGrid = { x: x, y: y };
 
                     subjects.push({
                         block: newBlock,
@@ -356,11 +392,11 @@ const tryCheckCollapse = (
                     });
 
                     onFinishFunctions.push(() => {
-                        blocks[columnIndex][index] = newBlock;
+                        blocks[x][y] = newBlock;
                     });
 
                     // post add procedure
-                    blocks[columnIndex][nextBlockIndex] = null;
+                    blocks[x][nextBlockY] = null;
                 }
             }
         }
@@ -375,49 +411,59 @@ const tryCheckCollapse = (
             () => {
                 onFinishFunctions.forEach((func) => func());
                 animLock = false;
-                tryCheckMergeSingleStep(p5, activeColumn, onAnimChainFinished);
+                tryCheckMerge(p5, activeColumn, false, onAnimChainFinished);
             },
         );
     } else {
-        tryCheckMergeSingleStep(p5, activeColumn, onAnimChainFinished);
+        tryCheckMerge(p5, activeColumn, false, onAnimChainFinished);
     }
 };
 
-const getNewBlockOfMergeGroup = (group: number[][]): Block => {
-    const maxPower = group.reduce((acc, loc) => {
-        const block = blocks[loc[0]][loc[1]];
-        if (block && block.type === "power" && block.power > acc) {
+const getNewBlockOfMergeGroup = (group: Location[]): Block => {
+    const maxPower = group.reduce((acc, { x, y }) => {
+        const block = blocks[x][y];
+        if (block?.type === "power" && block.power > acc) {
             return block.power;
+        }
+        return acc;
+    }, 0);
+    const maxMagnitude = group.reduce((acc, { x, y }) => {
+        const block = blocks[x][y];
+        if (block?.type === "wildcard" && block.magnitude > acc) {
+            return block.magnitude;
         }
         return acc;
     }, 0);
     return {
         type: "power",
-        power: maxPower + group.length - 1,
+        power: maxPower + maxMagnitude + group.length - 1,
     };
 };
 
-const areAdjacent = (p1: number[], p2: number[]): boolean => {
+const areAdjacent = (
+    { x: x1, y: y1 }: Location,
+    { x: x2, y: y2 }: Location,
+): boolean => {
     return (
-        (Math.abs(p1[0] - p2[0]) === 1 && Math.abs(p1[1] - p2[1]) === 0) ||
-        (Math.abs(p1[0] - p2[0]) === 0 && Math.abs(p1[1] - p2[1]) === 1)
+        (Math.abs(x1 - x2) === 1 && Math.abs(y1 - y2) === 0) ||
+        (Math.abs(x1 - x2) === 0 && Math.abs(y1 - y2) === 1)
     );
 };
 
 const getCenterOfMergeGroup = (
-    group: number[][],
+    group: Location[],
     activeColumn: number,
-): number[] => {
+): Location => {
     if (group.length === 2) {
-        if (group[0][0] === group[1][0]) {
+        if (group[0].x === group[1].x) {
             // same x coordinate, so these are vertically stacked
             // we should return the one on bottom
-            return group[0][1] < group[1][1] ? group[0] : group[1];
+            return group[0].y < group[1].y ? group[0] : group[1];
         } else {
             // these must be horizontal
             // we should return the one closest to the active column
-            return Math.abs(group[0][0] - activeColumn) <
-                Math.abs(group[1][0] - activeColumn)
+            return Math.abs(group[0].x - activeColumn) <
+                Math.abs(group[1].x - activeColumn)
                 ? group[0]
                 : group[1];
         }
@@ -449,108 +495,168 @@ const getCenterOfMergeGroup = (
     return group[maxAdjacentIndex];
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
-const findMergeGroups = () => {
-    const mergeGroups: number[][][] = [];
-    for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-        const column = blocks[columnIndex];
-        for (let index = 0; index < rowCount; index++) {
-            const thisBlock = column[index];
+// helper function
+// check if this location is in some group already
+// and return that group's index if it is
+const checkAndAddToInteractionGroup = (
+    mergeGroups: Location[][],
+    current: Location,
+    match: Location,
+) => {
+    const newMergeGroups = mergeGroups.slice().map((g) => g.slice());
+    const currentGroupIndex = mergeGroups.findIndex((group) =>
+        group.some(({ x, y }) => x === current.x && y === current.y),
+    );
+    const matchGroupIndex = mergeGroups.findIndex((group) =>
+        group.some(({ x, y }) => x === match.x && y === match.y),
+    );
+    if (currentGroupIndex === -1 && matchGroupIndex !== -1) {
+        // match is in a group, so add current to that group
+        newMergeGroups[matchGroupIndex].push(current);
+    } else if (currentGroupIndex !== -1 && matchGroupIndex === -1) {
+        // current is in a group, so add match to that group
+        newMergeGroups[currentGroupIndex].push(match);
+    } else if (currentGroupIndex === -1 && matchGroupIndex === -1) {
+        // neither are in any group, so add a new group with both of them
+        newMergeGroups.push([current, match]);
+    }
+    return newMergeGroups;
+};
 
-            // if this spot is empty, move on
-            if (!thisBlock) {
+// eslint-disable-next-line sonarjs/cognitive-complexity
+const findSpecialMergeGroups = (): Location[][] => {
+    let specialMergeGroups: Location[][] = [];
+    for (let x = 0; x < columnCount; x++) {
+        const column = blocks[x];
+        for (let y = 0; y < rowCount; y++) {
+            const thisBlock = column[y];
+
+            // if this spot is empty or not a wildcard, move on
+            if (!thisBlock || thisBlock.type !== "wildcard") {
                 continue;
             }
 
-            // helper function
-            // check if this location is in some group already
-            // and return that group's index if it is
-            const checkAndAddToGroup = (current: number[], match: number[]) => {
-                const currentGroupIndex = mergeGroups.findIndex((group) =>
-                    group.some(
-                        (loc) => loc[0] === current[0] && loc[1] === current[1],
-                    ),
-                );
-                const matchGroupIndex = mergeGroups.findIndex((group) =>
-                    group.some(
-                        (loc) => loc[0] === match[0] && loc[1] === match[1],
-                    ),
-                );
-                if (currentGroupIndex === -1 && matchGroupIndex !== -1) {
-                    // match is in a group, so add current to that group
-                    mergeGroups[matchGroupIndex].push(current);
-                } else if (currentGroupIndex !== -1 && matchGroupIndex === -1) {
-                    // current is in a group, so add match to that group
-                    mergeGroups[currentGroupIndex].push(match);
-                } else if (currentGroupIndex === -1 && matchGroupIndex === -1) {
-                    // neither are in any group, so add a new group with both of them
-                    mergeGroups.push([current, match]);
-                }
-            };
-
             // check north
-            if (index < rowCount - 1) {
-                const otherBlock = column[index + 1];
-                if (
-                    otherBlock &&
-                    ((thisBlock.type === "power" &&
-                        otherBlock.type === "power" &&
-                        otherBlock.power === thisBlock.power) ||
-                        (thisBlock.type === "wildcard" &&
-                            thisBlock.directions.includes("north") &&
-                            otherBlock.type === "power"))
-                ) {
-                    checkAndAddToGroup(
-                        [columnIndex, index],
-                        [columnIndex, index + 1],
+            if (y < rowCount - 1 && thisBlock.directions.includes("north")) {
+                const otherBlock = column[y + 1];
+                if (otherBlock?.type === "power") {
+                    specialMergeGroups = checkAndAddToInteractionGroup(
+                        specialMergeGroups,
+                        { x: x, y: y },
+                        { x: x, y: y + 1 },
                     );
                 }
             }
 
             // check east
-            if (columnIndex < columnCount - 1) {
-                const otherBlock = blocks[columnIndex + 1][index];
-                if (
-                    otherBlock &&
-                    otherBlock.type === "power" &&
-                    thisBlock.type === "power" &&
-                    otherBlock.power === thisBlock.power
-                ) {
-                    checkAndAddToGroup(
-                        [columnIndex, index],
-                        [columnIndex + 1, index],
+            if (x < columnCount - 1 && thisBlock.directions.includes("east")) {
+                const otherBlock = blocks[x + 1][y];
+                if (otherBlock?.type === "power") {
+                    specialMergeGroups = checkAndAddToInteractionGroup(
+                        specialMergeGroups,
+                        { x: x, y: y },
+                        { x: x + 1, y: y },
                     );
                 }
             }
 
             // check south
-            if (index > 0) {
-                const otherBlock = column[index - 1];
-                if (
-                    otherBlock &&
-                    otherBlock.type === "power" &&
-                    thisBlock.type === "power" &&
-                    otherBlock.power === thisBlock.power
-                ) {
-                    checkAndAddToGroup(
-                        [columnIndex, index],
-                        [columnIndex, index - 1],
+            if (y > 0 && thisBlock.directions.includes("south")) {
+                const otherBlock = column[y - 1];
+                if (otherBlock?.type === "power") {
+                    specialMergeGroups = checkAndAddToInteractionGroup(
+                        specialMergeGroups,
+                        { x: x, y: y },
+                        { x: x, y: y - 1 },
                     );
                 }
             }
 
             // check west
-            if (columnIndex > 0) {
-                const otherBlock = blocks[columnIndex - 1][index];
+            if (x > 0 && thisBlock.directions.includes("west")) {
+                const otherBlock = blocks[x - 1][y];
+                if (otherBlock?.type === "power") {
+                    specialMergeGroups = checkAndAddToInteractionGroup(
+                        specialMergeGroups,
+                        { x: x, y: y },
+                        { x: x - 1, y: y },
+                    );
+                }
+            }
+        }
+    }
+    return specialMergeGroups;
+};
+
+// eslint-disable-next-line sonarjs/cognitive-complexity
+const findMergeGroups = (): Location[][] => {
+    let mergeGroups: Location[][] = [];
+    for (let x = 0; x < columnCount; x++) {
+        const column = blocks[x];
+        for (let y = 0; y < rowCount; y++) {
+            const thisBlock = column[y];
+
+            // if this spot is empty or not a powerblock, move on
+            if (!thisBlock || thisBlock.type !== "power") {
+                continue;
+            }
+
+            // check north
+            if (y < rowCount - 1) {
+                const otherBlock = column[y + 1];
                 if (
-                    otherBlock &&
-                    otherBlock.type === "power" &&
-                    thisBlock.type === "power" &&
+                    otherBlock?.type === "power" &&
                     otherBlock.power === thisBlock.power
                 ) {
-                    checkAndAddToGroup(
-                        [columnIndex, index],
-                        [columnIndex - 1, index],
+                    mergeGroups = checkAndAddToInteractionGroup(
+                        mergeGroups,
+                        { x: x, y: y },
+                        { x: x, y: y + 1 },
+                    );
+                }
+            }
+
+            // check east
+            if (x < columnCount - 1) {
+                const otherBlock = blocks[x + 1][y];
+                if (
+                    otherBlock?.type === "power" &&
+                    otherBlock.power === thisBlock.power
+                ) {
+                    mergeGroups = checkAndAddToInteractionGroup(
+                        mergeGroups,
+                        { x: x, y: y },
+                        { x: x + 1, y: y },
+                    );
+                }
+            }
+
+            // check south
+            if (y > 0) {
+                const otherBlock = column[y - 1];
+                if (
+                    otherBlock?.type === "power" &&
+                    otherBlock.power === thisBlock.power
+                ) {
+                    mergeGroups = checkAndAddToInteractionGroup(
+                        mergeGroups,
+                        { x: x, y: y },
+                        { x: x, y: y - 1 },
+                    );
+                }
+            }
+
+            // check west
+            if (x > 0) {
+                const otherBlock = blocks[x - 1][y];
+                if (
+                    otherBlock?.type === "power" &&
+                    otherBlock.power === thisBlock.power
+                ) {
+                    mergeGroups = checkAndAddToInteractionGroup(
+                        mergeGroups,
+                        { x: x, y: y },
+                        { x: x - 1, y: y },
                     );
                 }
             }
@@ -559,13 +665,16 @@ const findMergeGroups = () => {
     return mergeGroups;
 };
 
-const tryCheckMergeSingleStep = (
+const tryCheckMerge = (
     p5: p5Types,
     activeColumn: number,
+    checkSpecial?: boolean,
     onAnimChainFinished?: () => void,
     // eslint-disable-next-line sonarjs/cognitive-complexity
 ) => {
-    const mergeGroups: number[][][] = findMergeGroups();
+    const mergeGroups: Location[][] = checkSpecial
+        ? findSpecialMergeGroups()
+        : findMergeGroups();
 
     // if we know we're gonna merge, might as well lock it now
     if (mergeGroups.length > 0) {
@@ -581,23 +690,23 @@ const tryCheckMergeSingleStep = (
         const newBlock = getNewBlockOfMergeGroup(group);
 
         for (let index = 0; index < group.length; index++) {
-            const loc = group[index];
-            if (loc[0] === groupCenter[0] && loc[1] === groupCenter[1]) {
+            const { x, y } = group[index];
+            if (x === groupCenter.x && y === groupCenter.y) {
                 // we are the group center!
                 continue;
             }
             subjects.push({
                 block: newBlock,
-                startGridPos: loc,
+                startGridPos: { x, y },
                 endGridPos: groupCenter,
                 startSize: 1.0,
                 endSize: 1.0,
             });
-            blocks[loc[0]][loc[1]] = null;
+            blocks[x][y] = null;
         }
 
         onFinishFunctions.push(() => {
-            blocks[groupCenter[0]][groupCenter[1]] = newBlock;
+            blocks[groupCenter.x][groupCenter.y] = newBlock;
         });
     }
     if (mergeGroups.length > 0) {
@@ -613,12 +722,258 @@ const tryCheckMergeSingleStep = (
                 tryCheckCollapse(p5, activeColumn, onAnimChainFinished);
             },
         );
+    } else if (!checkSpecial) {
+        tryCheckMerge(p5, activeColumn, true, onAnimChainFinished);
     } else {
         onAnimChainFinished?.();
     }
 };
 
-const tryCheckNewcurrentLevel = (p5: p5Types) => {
+const isWildcardBlockPositionValid = ({ x, y }: Location): boolean => {
+    const block = blocks[x][y];
+    if (block?.type !== "wildcard") {
+        return true;
+    }
+
+    let hasValidMergeOption = false;
+    // check north
+    if (block.directions.includes("north")) {
+        // blocks can always fall to make room
+        // or have other blocks placed on top of them
+        // so north is never an invalid option
+        hasValidMergeOption = true;
+    }
+    // check south
+    if (block.directions.includes("south") && y !== 0) {
+        // this block isn't on the bottom row
+        // so, while unlikely if hasn't already,
+        // it still can technically merge
+        hasValidMergeOption = true;
+    }
+    // check east
+    if (block.directions.includes("east") && x !== columnCount - 1) {
+        // this block isn't in the rightmost column
+        // so it can definitely merge
+        hasValidMergeOption = true;
+    }
+    // check west
+    if (block.directions.includes("west") && x !== 0) {
+        // this block isn't in the leftmost column
+        // so it can definitely merge
+        hasValidMergeOption = true;
+    }
+    return hasValidMergeOption;
+};
+
+const getWildcardBlocksInClosedLoop = (): Location[] => {
+    let connectedSpecialGroups: Location[][] = [];
+    for (let x = 0; x < columnCount; x++) {
+        const column = blocks[x];
+        for (let y = 0; y < rowCount; y++) {
+            const thisBlock = column[y];
+
+            // if this spot is empty or not a wildcard block, move on
+            if (!thisBlock || thisBlock.type !== "wildcard") {
+                continue;
+            }
+
+            // if we face a wall, we are invalid
+            if (!isWildcardBlockPositionValid({ x: x, y: y })) {
+                const currentGroupIndex = connectedSpecialGroups.findIndex(
+                    (group) =>
+                        group.some(
+                            ({ x: groupX, y: groupY }) =>
+                                groupX === x && groupY === y,
+                        ),
+                );
+                // only add to a new group if we aren't already in one
+                // we could be in one because a block pointing at us may have added us
+                if (currentGroupIndex === -1) {
+                    connectedSpecialGroups.push([{ x: x, y: y }]);
+                }
+            }
+
+            // check north
+            if (y < rowCount - 1) {
+                const otherBlock = column[y + 1];
+                if (
+                    otherBlock?.type === "wildcard" &&
+                    (thisBlock.directions.includes("north") ||
+                        otherBlock.directions.includes("south"))
+                ) {
+                    connectedSpecialGroups = checkAndAddToInteractionGroup(
+                        connectedSpecialGroups,
+                        { x: x, y: y },
+                        { x: x, y: y + 1 },
+                    );
+                }
+            }
+
+            // check east
+            if (x < columnCount - 1) {
+                const otherBlock = blocks[x + 1][y];
+                if (
+                    otherBlock?.type === "wildcard" &&
+                    (thisBlock.directions.includes("east") ||
+                        otherBlock.directions.includes("west"))
+                ) {
+                    connectedSpecialGroups = checkAndAddToInteractionGroup(
+                        connectedSpecialGroups,
+                        { x: x, y: y },
+                        { x: x + 1, y: y },
+                    );
+                }
+            }
+
+            // check south
+            if (y > 0) {
+                const otherBlock = column[y - 1];
+                if (
+                    otherBlock?.type === "wildcard" &&
+                    (thisBlock.directions.includes("south") ||
+                        otherBlock.directions.includes("north"))
+                ) {
+                    connectedSpecialGroups = checkAndAddToInteractionGroup(
+                        connectedSpecialGroups,
+                        { x: x, y: y },
+                        { x: x, y: y - 1 },
+                    );
+                }
+            }
+
+            // check west
+            if (x > 0) {
+                const otherBlock = blocks[x - 1][y];
+                if (
+                    otherBlock?.type === "wildcard" &&
+                    (thisBlock.directions.includes("west") ||
+                        otherBlock.directions.includes("east"))
+                ) {
+                    connectedSpecialGroups = checkAndAddToInteractionGroup(
+                        connectedSpecialGroups,
+                        { x: x, y: y },
+                        { x: x - 1, y: y },
+                    );
+                }
+            }
+        }
+    }
+
+    const closedSpecialGroups: Location[][] = [];
+    connectedSpecialGroups.forEach((group) => {
+        let groupIsValid = false;
+        for (let i = 0; i < group.length; i++) {
+            const { x, y } = group[i];
+            const thisBlock = blocks[x][y] as WildcardBlock;
+
+            // check north
+            if (y < rowCount - 1 && thisBlock.directions.includes("north")) {
+                const otherBlock = blocks[x][y + 1];
+                if (otherBlock === null || otherBlock.type !== "wildcard") {
+                    groupIsValid = true;
+                    break;
+                }
+            }
+
+            // check east
+            if (x < columnCount - 1 && thisBlock.directions.includes("east")) {
+                const otherBlock = blocks[x + 1][y];
+                if (otherBlock === null || otherBlock.type !== "wildcard") {
+                    groupIsValid = true;
+                    break;
+                }
+            }
+
+            // check south
+            if (y > 0 && thisBlock.directions.includes("south")) {
+                const otherBlock = blocks[x][y - 1];
+                if (otherBlock === null || otherBlock.type !== "wildcard") {
+                    groupIsValid = true;
+                    break;
+                }
+            }
+
+            // check west
+            if (x > 0 && thisBlock.directions.includes("west")) {
+                const otherBlock = blocks[x - 1][y];
+                if (otherBlock === null || otherBlock.type !== "wildcard") {
+                    groupIsValid = true;
+                    break;
+                }
+            }
+        }
+        if (!groupIsValid) {
+            closedSpecialGroups.push(group.slice());
+        }
+    });
+
+    return closedSpecialGroups.flat();
+};
+
+const tryCheckRemoveInvalidBlocks = (
+    p5: p5Types,
+    onAnimChainFinished: () => void,
+) => {
+    // remove all on-screen blocks that are considered "invalid"
+    // these include:
+    // - power blocks below the minimum power
+    // - wildcard blocks in a closed chain
+    const blocksToRemove: Location[] = [];
+
+    const invalidWildcardBlocks: Location[] = getWildcardBlocksInClosedLoop();
+    blocksToRemove.push(...invalidWildcardBlocks);
+
+    for (let x = 0; x < columnCount; x++) {
+        const column = blocks[x];
+        for (let y = 0; y < rowCount; y++) {
+            const block = column[y];
+            if (
+                block?.type === "power" &&
+                block.power < currentLevel
+                // ||
+                // (block?.type === "wildcard" &&
+                //     !isWildcardBlockPositionValid({ x: x, y: y }))
+            ) {
+                blocksToRemove.push({ x: x, y: y });
+            }
+        }
+    }
+
+    let activeColumn = 0;
+    const subjects: AnimGridSubject[] = [];
+
+    blocksToRemove.forEach(({ x, y }) => {
+        const block = blocks[x][y] as Block;
+        // we'll just set it to whichever one we saw last, because why not
+        activeColumn = x;
+        // this is the removal animation
+        subjects.push({
+            block: block,
+            startGridPos: { x: x, y: y },
+            endGridPos: { x: x + 0.5, y: y - 0.5 },
+            startSize: 1.0,
+            endSize: 0.0,
+        });
+        // just immediately remove it on-record
+        blocks[x][y] = null;
+    });
+
+    if (blocksToRemove.length > 0) {
+        animLock = true;
+        addBlockAnimation(
+            p5,
+            subjects,
+            removeBlockAnimationDurationMillis,
+            removeBlockAnimationCurveFunction,
+            () => {
+                animLock = false;
+                tryCheckCollapse(p5, activeColumn, onAnimChainFinished);
+            },
+        );
+    }
+};
+
+const tryCheckNewLevel = () => {
     // update the minimum power
     const newcurrentLevel = Math.max(
         getMaxPowerActive() - (stepsAboveMinimumToAdvance - 1),
@@ -631,60 +986,27 @@ const tryCheckNewcurrentLevel = (p5: p5Types) => {
         blockProgression = blockProgression.map(() =>
             selectNextBlockInProgression(),
         );
-
-        // remove all on-screen blocks below the new minimum
-        let activeColumn = 0;
-        let removedAnyBlock = false;
-        const subjects: AnimGridSubject[] = [];
-        for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-            const column = blocks[columnIndex];
-            for (let index = 0; index < rowCount; index++) {
-                const block = column[index];
-                if (block?.type === "power" && block.power < currentLevel) {
-                    removedAnyBlock = true;
-                    // we'll just set it to whichever one we saw last, because why not
-                    activeColumn = columnIndex;
-                    // this is the removal animation
-                    subjects.push({
-                        block: block,
-                        startGridPos: [columnIndex, index],
-                        endGridPos: [columnIndex + 0.5, index - 0.5],
-                        startSize: 1.0,
-                        endSize: 0.0,
-                    });
-                    // just immediately remove it on-record
-                    blocks[columnIndex][index] = null;
-                }
-            }
-        }
-
-        if (removedAnyBlock) {
-            addBlockAnimation(
-                p5,
-                subjects,
-                removeBlockAnimationDurationMillis,
-                removeBlockAnimationCurveFunction,
-                () => {
-                    tryCheckCollapse(p5, activeColumn);
-                },
-            );
-        }
     }
+};
+
+const getHandleAnimChainFinished = (p5: p5Types): (() => void) => {
+    return () => {
+        tryCheckNewLevel();
+        tryCheckRemoveInvalidBlocks(p5, getHandleAnimChainFinished(p5));
+        saveToLocalStorage(p5);
+    };
 };
 
 const MergeMania = () => {
     const theme = useTheme();
 
-    const mouseIsOverColumnRect = (
-        p5: p5Types,
-        columnIndex: number,
-    ): boolean => {
+    const mouseIsOverColumnRect = (p5: p5Types, gridX: number): boolean => {
         const topLeft = [
-            padding * (columnIndex + 1) + columnIndex * blockSize,
+            padding * (gridX + 1) + gridX * blockSize,
             blockSize + padding * 2,
         ];
         const bottomRight = [
-            padding * (columnIndex + 1) + columnIndex * blockSize + blockSize,
+            padding * (gridX + 1) + gridX * blockSize + blockSize,
             blockSize +
                 padding * 2 +
                 (blockSize * rowCount + padding * rowCount + 1),
@@ -713,9 +1035,25 @@ const MergeMania = () => {
             ];
 
             // draw block background
-            const bgColor = getBlockBackgroundColor(p5, block);
+            let bgColor = getBlockBackgroundColor(p5, block);
             p5.fill(bgColor);
             p5.rect(x, y, actualBlockSize, actualBlockSize, roundingRadius);
+
+            if (block.type === "wildcard") {
+                bgColor = p5.color("#FFF"); // the REAL background color!
+                const innerBlockSize = actualBlockSize * 0.8;
+                p5.push();
+                p5.stroke(p5.color("#FFF"));
+                p5.fill(bgColor);
+                p5.rect(
+                    x + (actualBlockSize - innerBlockSize) / 2,
+                    y + (actualBlockSize - innerBlockSize) / 2,
+                    innerBlockSize,
+                    innerBlockSize,
+                    roundingRadius * 0.8,
+                );
+                p5.pop();
+            }
 
             // draw text
             const blockText = getFormattedBlockText(block);
@@ -742,14 +1080,24 @@ const MergeMania = () => {
 
                 p5.push();
                 p5.translate(blockCenter[0], blockCenter[1]);
-                if (block.directions.includes("north")) {
-                    const a = [0, -actualBlockSize * 0.4];
-                    const b = [a[0] - triangleWidth / 2, a[1] + triangleHeight];
-                    const c = [a[0] + triangleWidth / 2, a[1] + triangleHeight];
-                    p5.fill(p5.color("#000"));
-                    p5.triangle(a[0], a[1], b[0], b[1], c[0], c[1]);
+                (
+                    ["north", "east", "south", "west"] as CardinalDirection[]
+                ).forEach((dir) => {
+                    if (block.directions.includes(dir)) {
+                        const a = [0, -actualBlockSize * 0.4];
+                        const b = [
+                            a[0] - triangleWidth / 2,
+                            a[1] + triangleHeight,
+                        ];
+                        const c = [
+                            a[0] + triangleWidth / 2,
+                            a[1] + triangleHeight,
+                        ];
+                        p5.fill(p5.color("#000"));
+                        p5.triangle(a[0], a[1], b[0], b[1], c[0], c[1]);
+                    }
                     p5.rotate(p5.HALF_PI); // 90 degrees
-                }
+                });
                 p5.pop();
             }
         }
@@ -762,7 +1110,10 @@ const MergeMania = () => {
         block: Block,
         sizeMultiplier = 1.0,
     ) => {
-        const [actualX, actualY] = actualCoordinatesFromGrid([x, y]);
+        const { x: actualX, y: actualY } = actualLocationFromGrid({
+            x: x,
+            y: y,
+        });
         drawPowerBlock(p5, actualX, actualY, block, sizeMultiplier);
     };
 
@@ -771,18 +1122,18 @@ const MergeMania = () => {
             resetGame();
             return;
         }
-        for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+        for (let x = 0; x < columnCount; x++) {
             if (
                 !animLock &&
-                mouseIsOverColumnRect(p5, columnIndex) &&
-                blocks[columnIndex].some((block) => !block)
+                mouseIsOverColumnRect(p5, x) &&
+                blocks[x].some((block) => !block)
             ) {
                 animLock = true;
-                const endGridPosY = getNextOpenIndexInColumn(columnIndex);
+                const endGridPosY = getNextOpenIndexInColumn(x);
 
                 const newBlock = blockProgression[0];
-                const fromGrid = [columnIndex, 5];
-                const toGrid = [columnIndex, endGridPosY];
+                const fromGrid = { x: x, y: 5 };
+                const toGrid = { x: x, y: endGridPosY };
 
                 const blockProgressionCopy = blockProgression.slice();
                 // advancePowerProgression();
@@ -802,8 +1153,8 @@ const MergeMania = () => {
                         // the power progression indicator block
                         {
                             block: blockProgressionCopy[1],
-                            startGridPos: [2.5, 6],
-                            endGridPos: [1.5, 6],
+                            startGridPos: { x: 2.5, y: 6 },
+                            endGridPos: { x: 1.5, y: 6 },
                             startSize: 0.8,
                             endSize: 1.0,
                         },
@@ -811,14 +1162,16 @@ const MergeMania = () => {
                     newBlockAnimationDurationMillis,
                     newBlockAnimationCurveFunction,
                     () => {
-                        addBlockToColumn(columnIndex, newBlock);
+                        addBlockToColumn(x, newBlock);
                         blockProgression = blockProgressionCopy;
                         advanceBlockProgression();
                         animLock = false;
-                        tryCheckMergeSingleStep(p5, columnIndex, () => {
-                            tryCheckNewcurrentLevel(p5);
-                            saveToLocalStorage(p5);
-                        });
+                        tryCheckMerge(
+                            p5,
+                            x,
+                            false,
+                            getHandleAnimChainFinished(p5),
+                        );
                     },
                 );
             }
@@ -855,8 +1208,11 @@ const MergeMania = () => {
         p5.textAlign(p5.RIGHT, p5.TOP);
         p5.textSize(20 * scalar);
         p5.textFont(fontString);
-        const textCoords = actualCoordinatesFromGrid([4.4, 5.9]);
-        p5.text("goal:", textCoords[0], textCoords[1]);
+        const { x: textX, y: textY } = actualLocationFromGrid({
+            x: 4.4,
+            y: 5.9,
+        });
+        p5.text("goal:", textX, textY);
         drawPowerBlockAtGridLocation(
             p5,
             4.5,
@@ -908,15 +1264,15 @@ const MergeMania = () => {
                     progression,
                     0,
                     1,
-                    subject.startPos[0],
-                    subject.endPos[0],
+                    subject.startPos.x,
+                    subject.endPos.x,
                 );
                 const y = p5.map(
                     progression,
                     0,
                     1,
-                    subject.startPos[1],
-                    subject.endPos[1],
+                    subject.startPos.y,
+                    subject.endPos.y,
                 );
                 const size = p5.map(
                     progression,
