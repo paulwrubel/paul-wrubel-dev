@@ -18,8 +18,8 @@ const FABRIK = () => {
     let origin: p5Types.Vector;
 
     const nodes = 10;
-    const segmentLength = 30;
-    const maxAngle = 20;
+    const segmentLength = 50;
+    const maxAngle = 135;
     const lengths: number[] = [...Array(nodes - 1).keys()].map(
         () => segmentLength,
     );
@@ -103,7 +103,8 @@ const FABRIK = () => {
                                         constraintAngles[i - 1] / angle,
                                         1,
                                     ),
-                                ),
+                                )
+                                .normalize(),
                         );
                     }
                     jointToMove.position.set(
@@ -132,7 +133,8 @@ const FABRIK = () => {
                                         1 - constraintAngles[0] / angle,
                                         1,
                                     ),
-                                ),
+                                )
+                                .normalize(),
                         );
                     }
                     nextJoint.position.set(
@@ -196,7 +198,8 @@ const FABRIK = () => {
                                     1 - constraintAngles[i + 1] / angle,
                                     1,
                                 ),
-                            ),
+                            )
+                            .normalize(),
                     );
                 }
                 jointToMove.position.set(

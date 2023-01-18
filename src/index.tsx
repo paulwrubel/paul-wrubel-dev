@@ -1,5 +1,3 @@
-import React from "react";
-
 import "index.css";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 
@@ -12,14 +10,12 @@ import Theme from "Theme";
 import App from "./App";
 
 createRoot(document.getElementById("root") as HTMLElement).render(
-    // <React.StrictMode>
     <ThemeProvider theme={Theme}>
         <HelmetProvider>
             <CssBaseline />
             <App />
         </HelmetProvider>
     </ThemeProvider>,
-    // {/* </React.StrictMode>, */}
 );
 
 // If you want to start measuring performance in your app, pass a function
