@@ -1,6 +1,6 @@
+import FABRIK from "components/tools/FABRIK";
 import MergeMania from "components/tools/MergeMania";
 import MergeManiaProto from "components/tools/MergeManiaProto";
-// import TrafficSim from "components/tools/TrafficSim";
 
 type Tool = {
     name: string;
@@ -24,6 +24,11 @@ const tools: Tool[] = [
         name: "merge-mania",
         description: "a merge game, built in p5.js. It's better this time!",
         component: <MergeMania />,
+    },
+    {
+        name: "fabrik",
+        description: "forward and backward reaching inverse kinematics solver.",
+        component: <FABRIK />,
     },
 ];
 
