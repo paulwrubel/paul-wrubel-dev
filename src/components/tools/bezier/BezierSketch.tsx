@@ -19,12 +19,14 @@ const BezierSketch = ({
     height,
     curve,
     t,
+    shouldShowProgress,
     approximationSegments,
 }: {
     width: number;
     height: number;
     curve: BezierCurve;
     t: number;
+    shouldShowProgress: boolean;
     approximationSegments: number;
 }) => {
     const isPointInCircle = (
@@ -137,7 +139,7 @@ const BezierSketch = ({
         p5.push();
         p5.noFill();
         p5.strokeWeight(2);
-        curve.drawApproximation(p5, approximationSegments);
+        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments);
         p5.pop();
 
         // draw point info
@@ -180,6 +182,8 @@ const BezierSketch = ({
             draw={draw}
             mousePressed={mousePressed}
             mouseReleased={mouseReleased}
+            touchStarted={mousePressed}
+            touchEnded={mouseReleased}
         />
     );
 };

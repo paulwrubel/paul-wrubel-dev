@@ -1,12 +1,21 @@
 import { useState } from "react";
 
-import { Box, Button, Slider, Typography } from "@mui/material";
+import {
+    Box,
+    Button,
+    FormControlLabel,
+    Slider,
+    Switch,
+    Typography,
+} from "@mui/material";
 
 import { BezierCurve, Point } from "./BezierCurve";
 import BezierSketch from "./BezierSketch";
 
 const width = Math.min(1000, window.innerWidth - 10);
-const height = 600;
+const height = Math.min(600, window.innerHeight - 350);
+
+const fontFamily = '"Source Code Pro", monospace';
 
 const Bezier = () => {
     const [curve, setCurve] = useState<BezierCurve>(
@@ -21,6 +30,7 @@ const Bezier = () => {
     const [t, setT] = useState<number>(0.5);
     const [approximationSegments, setApproximationSegments] =
         useState<number>(50);
+    const [shouldShowProgress, setShouldShowProgress] = useState<boolean>(true);
 
     const handleTChange = (_: Event, newValue: number | number[]) => {
         setT(newValue as number);
@@ -31,6 +41,12 @@ const Bezier = () => {
         newValue: number | number[],
     ) => {
         setApproximationSegments(newValue as number);
+    };
+
+    const handleShouldShowProgressChange = (
+        event: React.ChangeEvent<HTMLInputElement>,
+    ) => {
+        setShouldShowProgress(event.target.checked);
     };
 
     const handleAddPoint = () => {
@@ -70,6 +86,7 @@ const Bezier = () => {
                 height={height}
                 curve={curve}
                 t={t}
+                shouldShowProgress={shouldShowProgress}
                 approximationSegments={approximationSegments}
             />
             <Box
@@ -106,7 +123,7 @@ const Bezier = () => {
                     value={approximationSegments}
                     onChange={handleApproximationSegmentsChange}
                     min={1}
-                    max={80}
+                    max={120}
                     step={1}
                     valueLabelDisplay="auto"
                     aria-labelledby="approximation-segments-typography"
@@ -118,11 +135,27 @@ const Bezier = () => {
                         width: 1,
                     }}
                 >
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={shouldShowProgress}
+                                onChange={handleShouldShowProgressChange}
+                            />
+                        }
+                        label="show curve progress"
+                        componentsProps={{
+                            typography: {
+                                sx: {
+                                    fontFamily: fontFamily,
+                                },
+                            },
+                        }}
+                    />
                     <Button
                         variant="outlined"
                         onClick={handleRemovePoint}
                         sx={{
-                            fontFamily: '"Source Code Pro", monospace',
+                            fontFamily: fontFamily,
                         }}
                     >
                         remove point
@@ -131,7 +164,7 @@ const Bezier = () => {
                         variant="contained"
                         onClick={handleAddPoint}
                         sx={{
-                            fontFamily: '"Source Code Pro", monospace',
+                            fontFamily: fontFamily,
                         }}
                     >
                         add point

@@ -31,7 +31,14 @@ class BezierCurve {
         return this.#points.length - 1;
     }
 
-    draw = (p5: p5Types, numSegments?: number) => {
+    draw = (p5: p5Types, maxT: number, numSegments?: number) => {
+        const lines = this.getApproximationSegments(p5, maxT, numSegments);
+        lines.forEach((line) => {
+            p5.line(line.a.x, line.a.y, line.b.x, line.b.y);
+        });
+    };
+
+    drawUsingP5 = (p5: p5Types, maxT: number, numSegments?: number) => {
         switch (this.order) {
             case 1: {
                 // linear
@@ -71,16 +78,9 @@ class BezierCurve {
                 break;
             }
             default: {
-                this.drawApproximation(p5, numSegments);
+                this.draw(p5, maxT, numSegments);
             }
         }
-    };
-
-    drawApproximation = (p5: p5Types, numSegments?: number) => {
-        const lines = this.getApproximationSegments(p5, numSegments);
-        lines.forEach((line) => {
-            p5.line(line.a.x, line.a.y, line.b.x, line.b.y);
-        });
     };
 
     getLinesBetweenPoints = (): Line[] => {
@@ -136,11 +136,15 @@ class BezierCurve {
         return new BezierCurve(...newPoints);
     };
 
-    getApproximationSegments = (p5: p5Types, numSegments = 10): Line[] => {
+    getApproximationSegments = (
+        p5: p5Types,
+        maxT: number,
+        numSegments = 10,
+    ): Line[] => {
         if (numSegments < 1) {
             throw new Error("segments must be at least 1");
         }
-        const interval = 1 / numSegments;
+        const interval = maxT / numSegments;
         const segments: Line[] = [];
         let thisPoint = this.getPointAt(p5, 0);
         // for (let i = interval; i <= 1; i += interval) {
