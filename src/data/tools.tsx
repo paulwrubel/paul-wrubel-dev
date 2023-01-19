@@ -1,3 +1,4 @@
+import Bezier from "components/tools/bezier";
 import FABRIK from "components/tools/FABRIK";
 import MergeMania from "components/tools/MergeMania";
 import MergeManiaProto from "components/tools/MergeManiaProto";
@@ -29,6 +30,11 @@ const tools: Tool[] = [
         name: "fabrik",
         description: "forward and backward reaching inverse kinematics solver.",
         component: <FABRIK />,
+    },
+    {
+        name: "bezier",
+        description: "an n-th dimensional bezier curve demonstration.",
+        component: <Bezier />,
     },
 ];
 
