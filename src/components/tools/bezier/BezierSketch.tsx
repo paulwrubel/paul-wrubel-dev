@@ -55,7 +55,7 @@ const BezierSketch = ({
         });
     };
 
-    const mousePressed = (p5: p5Types) => {
+    const mousePressedOrTouchStarted = (p5: p5Types) => {
         for (let i = 0; i < curve.points.length; i++) {
             const point = curve.points[i];
             if (
@@ -73,7 +73,7 @@ const BezierSketch = ({
         }
     };
 
-    const mouseReleased = () => {
+    const mouseReleasedOrTouchEnded = () => {
         indexBeingDragged = -1;
     };
 
@@ -180,10 +180,10 @@ const BezierSketch = ({
         <Sketch
             setup={setup}
             draw={draw}
-            mousePressed={mousePressed}
-            mouseReleased={mouseReleased}
-            touchStarted={mousePressed}
-            touchEnded={mouseReleased}
+            mousePressed={mousePressedOrTouchStarted}
+            mouseReleased={mouseReleasedOrTouchEnded}
+            touchStarted={mousePressedOrTouchStarted}
+            touchEnded={mouseReleasedOrTouchEnded}
         />
     );
 };
