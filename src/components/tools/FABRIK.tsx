@@ -19,7 +19,7 @@ const FABRIK = () => {
 
     const nodes = 10;
     const segmentLength = 50;
-    const maxAngle = 135;
+    const maxAngle = 180;
     const lengths: number[] = [...Array(nodes - 1).keys()].map(
         () => segmentLength,
     );
