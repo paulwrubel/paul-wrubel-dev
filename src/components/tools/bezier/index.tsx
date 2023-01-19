@@ -99,7 +99,7 @@ const BezierSketch = ({
         p5.background(p5.color("#EEE"));
 
         // draw guidelines for our order and all lower
-        if (curve.order > 2) {
+        if (curve.order > 1) {
             let lowerOrderCurve = curve;
             let colorIndex = 0;
             do {
