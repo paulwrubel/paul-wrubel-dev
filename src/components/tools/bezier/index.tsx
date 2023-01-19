@@ -120,21 +120,21 @@ const Bezier = () => {
                 >
                     <Button
                         variant="outlined"
-                        onClick={handleAddPoint}
-                        sx={{
-                            fontFamily: '"Source Code Pro", monospace',
-                        }}
-                    >
-                        add point
-                    </Button>
-                    <Button
-                        variant="outlined"
                         onClick={handleRemovePoint}
                         sx={{
                             fontFamily: '"Source Code Pro", monospace',
                         }}
                     >
                         remove point
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleAddPoint}
+                        sx={{
+                            fontFamily: '"Source Code Pro", monospace',
+                        }}
+                    >
+                        add point
                     </Button>
                 </Box>
             </Box>
