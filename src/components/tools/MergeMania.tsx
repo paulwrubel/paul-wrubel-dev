@@ -6,7 +6,8 @@ import { useTheme } from "@mui/material";
 import Bezier from "bezier-easing";
 import p5Types from "p5";
 import Sketch from "react-p5";
-import seedrandom from "seedrandom";
+
+import { randRangeInt, randomCherryPickFromArray } from "utils";
 
 type LocalStorageData = {
     currentLevel: number;
@@ -145,23 +146,6 @@ let gameOver = false;
 //     return (rng?.quick() ?? Math.random()) * (max - min) + min;
 // };
 
-const randomCherryPickFromArray = <T,>(array: T[], quantity: number): T[] => {
-    if (quantity < 1) {
-        return [];
-    }
-
-    const randIndex = randRangeInt(0, array.length - 1);
-    const cherryPick = array[randIndex];
-
-    const subtractedArray = array.slice();
-    subtractedArray.splice(randIndex, 1);
-
-    return [
-        cherryPick,
-        ...randomCherryPickFromArray(subtractedArray, quantity - 1),
-    ];
-};
-
 const resetGame = () => {
     blocks = [...Array(columnCount).keys()].map(() =>
         [...Array(rowCount).keys()].map(() => initialFill),
@@ -175,16 +159,6 @@ const resetGame = () => {
     ];
     gameOver = false;
     console.log("did a sharp reset, mate!");
-};
-
-const randRangeInt = (
-    min: number,
-    max: number,
-    rng?: seedrandom.PRNG,
-): number => {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor((rng?.quick() ?? Math.random()) * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
 };
 
 const saveToLocalStorage = (p5: p5Types) => {

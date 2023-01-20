@@ -2,6 +2,7 @@ import Bezier from "components/tools/bezier";
 import FABRIK from "components/tools/FABRIK";
 import MergeMania from "components/tools/MergeMania";
 import MergeManiaProto from "components/tools/MergeManiaProto";
+import PeerPong from "components/tools/peerpong";
 
 type Tool = {
     name: string;
@@ -23,7 +24,7 @@ const tools: Tool[] = [
     },
     {
         name: "merge-mania",
-        description: "a merge game, built in p5.js. It's better this time!",
+        description: "a merge game, built in p5.js. it's better this time!",
         component: <MergeMania />,
     },
     {
@@ -35,6 +36,12 @@ const tools: Tool[] = [
         name: "bezier",
         description: "an n-th dimensional bezier curve demonstration.",
         component: <Bezier />,
+    },
+    {
+        name: "peer-pong",
+        description:
+            "pong, but multiplayer! so, basically just regular pong. built using PeerJS",
+        component: <PeerPong />,
     },
 ];
 
