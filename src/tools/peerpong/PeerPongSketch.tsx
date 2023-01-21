@@ -1,7 +1,7 @@
 import p5Types from "p5";
 import Sketch from "react-p5";
 
-import { ConnectionInfo } from "components/peerjs/PeerJSWrapper";
+import { ConnectionInfo } from "components/PeerJSWrapper/types";
 import { clamp } from "utils";
 
 type Point = {
@@ -76,7 +76,7 @@ const PeerPongSketch = ({
             // peerPaddle.y = peerData.peerPaddle.y;
         });
     } else {
-        connectionInfo.host.on("data", (data: unknown) => {
+        connectionInfo.host?.on("data", (data: unknown) => {
             // console.log("updating host location as peer");
             // console.log(data);
             const newHostState = data as HostState;
@@ -92,7 +92,7 @@ const PeerPongSketch = ({
         if (connectionInfo.role === "host") {
             connectionInfo.peers[0].send(data);
         } else {
-            connectionInfo.host.send(data);
+            connectionInfo.host?.send(data);
         }
     };
 

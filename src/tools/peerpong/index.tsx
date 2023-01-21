@@ -9,7 +9,7 @@
 // import PeerPongSketch from "./PeerPongSketch";
 // import { ConnectionInfo, ConnectionState } from "./types";
 
-import { PeerJSWrapper } from "components/peerjs/PeerJSWrapper";
+import { PeerJSWrapper } from "components/PeerJSWrapper";
 
 import PeerPongSketch from "./PeerPongSketch";
 
