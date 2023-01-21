@@ -1,8 +1,8 @@
-import Bezier from "components/tools/bezier";
-import FABRIK from "components/tools/FABRIK";
-import MergeMania from "components/tools/MergeMania";
-import MergeManiaProto from "components/tools/MergeManiaProto";
-import PeerPong from "components/tools/peerpong";
+import Bezier from "tools/bezier";
+import FABRIK from "tools/FABRIK";
+import MergeMania from "tools/MergeMania";
+import MergeManiaProto from "tools/MergeManiaProto";
+import PeerPong from "tools/peerpong";
 
 type Tool = {
     name: string;
