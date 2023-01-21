@@ -1,9 +1,8 @@
 import p5Types from "p5";
 import Sketch from "react-p5";
 
+import { ConnectionInfo } from "components/peerjs/PeerJSWrapper";
 import { clamp } from "utils";
-
-import { ConnectionInfo } from "./types";
 
 type Point = {
     x: number;
@@ -62,12 +61,12 @@ let peerState: PeerState = {
 let hasGameStarted = false;
 
 const PeerPongSketch = ({
-    connectionInfo: { role, connection },
+    connectionInfo,
 }: {
     connectionInfo: ConnectionInfo;
 }) => {
-    if (role === "host") {
-        connection.on("data", (data) => {
+    if (connectionInfo.role === "host") {
+        connectionInfo.peers[0].on("data", (data: unknown) => {
             // console.log("updating peer location as host");
             // console.log(data);
             const newPeerState = data as PeerState;
@@ -77,7 +76,7 @@ const PeerPongSketch = ({
             // peerPaddle.y = peerData.peerPaddle.y;
         });
     } else {
-        connection.on("data", (data) => {
+        connectionInfo.host.on("data", (data: unknown) => {
             // console.log("updating host location as peer");
             // console.log(data);
             const newHostState = data as HostState;
@@ -90,7 +89,11 @@ const PeerPongSketch = ({
     }
 
     const sendData = (data: State) => {
-        connection.send(data);
+        if (connectionInfo.role === "host") {
+            connectionInfo.peers[0].send(data);
+        } else {
+            connectionInfo.host.send(data);
+        }
     };
 
     const tryReflectBall = (p5: p5Types) => {
@@ -206,7 +209,7 @@ const PeerPongSketch = ({
 
     const draw = (p5: p5Types) => {
         // update positions
-        if (role === "host") {
+        if (connectionInfo.role === "host") {
             // paddle
             hostState.hostPaddle.y = clamp(
                 p5.mouseY,
@@ -229,7 +232,7 @@ const PeerPongSketch = ({
         }
 
         // communicate data
-        if (role === "host") {
+        if (connectionInfo.role === "host") {
             // console.log(paddle2Position);
             sendData({
                 ...hostState,
