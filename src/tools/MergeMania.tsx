@@ -958,9 +958,14 @@ const tryCheckNewLevel = () => {
         currentLevel = newcurrentLevel;
 
         // reset power progression
-        blockProgression = blockProgression.map(() =>
-            selectNextBlockInProgression(),
+        const retainedBlocks = blockProgression.filter(
+            (block) => !(block.type === "power" && block.power < currentLevel),
         );
+        const newBlocks = Array.from(
+            { length: blockProgression.length - retainedBlocks.length },
+            () => selectNextBlockInProgression(),
+        );
+        blockProgression = [...retainedBlocks, ...newBlocks];
     }
 };
 
@@ -1156,9 +1161,11 @@ const MergeMania = () => {
     const setup = (p5: p5Types, canvasParentRef: Element) => {
         if (!ranSetup) {
             p5.createCanvas(width, height).parent(canvasParentRef);
-            p5.frameRate(144);
             loadFromLocalStorage(p5);
-            ranSetup = true; // for some reason this is necessary? otherwise it creates two canvasses. no idea why
+
+            // for some reason this is necessary? otherwise it creates two canvasses. no idea why
+            // [REACT STRICT MODE IS THE CAUSE]
+            ranSetup = true;
         }
     };
 
