@@ -1,8 +1,8 @@
-import Bezier from "tools/bezier";
+import Bezier from "tools/Bezier";
 import FABRIK from "tools/FABRIK";
 import MergeMania from "tools/MergeMania";
 import MergeManiaProto from "tools/MergeManiaProto";
-import PeerPong from "tools/peerpong";
+import PeerPong from "tools/PeerPong";
 
 type Tool = {
     name: string;

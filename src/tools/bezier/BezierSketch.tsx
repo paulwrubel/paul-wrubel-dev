@@ -1,7 +1,9 @@
 import p5Types from "p5";
 import Sketch from "react-p5";
 
-import { BezierCurve, Point } from "./BezierCurve";
+import { BezierCurve } from "toolhelpers/BezierCurve";
+import { Line } from "toolhelpers/Line";
+import { Point } from "toolhelpers/Point";
 
 const pointDragRadius = 30;
 
@@ -12,7 +14,7 @@ const endColor = "#933";
 const colorsByOrder = ["#999", "#9D9", "#99D", "#D99", "#DD9", "#D9D", "#9DD"];
 
 let indexBeingDragged = -1;
-const pointOffset: Point = { x: 0, y: 0 };
+const pointOffset: Point = new Point(0, 0);
 
 const BezierSketch = ({
     width,
@@ -34,10 +36,7 @@ const BezierSketch = ({
         center: Point,
         radius: number,
     ): boolean => {
-        const dx = center.x - point.x;
-        const dy = center.y - point.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        return dist < radius;
+        return new Line(point, center).length < radius;
     };
 
     const keepPointsInBounds = (p5: p5Types, radius = 0) => {
@@ -60,8 +59,8 @@ const BezierSketch = ({
             const point = curve.points[i];
             if (
                 isPointInCircle(
-                    { x: p5.pmouseX, y: p5.pmouseY },
-                    { x: point.x, y: point.y },
+                    new Point(p5.pmouseX, p5.pmouseY),
+                    new Point(point.x, point.y),
                     pointDragRadius,
                 )
             ) {
@@ -168,11 +167,19 @@ const BezierSketch = ({
         });
 
         // draw the point on the line at t
-        const tPoint = curve.getPointAt(p5, t);
+        const tPoint = curve.getPointAtT(p5, t);
         p5.push();
         p5.stroke(p5.color("#000"));
         p5.fill(p5.color("#000"));
         p5.circle(tPoint.x, tPoint.y, 10);
+        p5.pop();
+
+        // draw the point on the line at dist
+        const distPoint = curve.getPointAtDist(p5, t);
+        p5.push();
+        p5.stroke(p5.color("#00F"));
+        p5.fill(p5.color("#00F"));
+        p5.circle(distPoint.x, distPoint.y, 10);
         p5.pop();
     };
 

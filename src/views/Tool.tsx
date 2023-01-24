@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useParams } from "react-router-dom";
 
 import toolList from "data/tools";
+
 const Tool = () => {
     const toolName = useParams().tool;
 
