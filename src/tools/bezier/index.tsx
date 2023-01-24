@@ -9,7 +9,9 @@ import {
     Typography,
 } from "@mui/material";
 
-import { BezierCurve, Point } from "./BezierCurve";
+import { BezierCurve } from "toolhelpers/BezierCurve";
+import { Point } from "toolhelpers/Point";
+
 import BezierSketch from "./BezierSketch";
 
 const width = Math.min(1000, window.innerWidth - 10);
@@ -20,10 +22,10 @@ const fontFamily = '"Source Code Pro", monospace';
 const Bezier = () => {
     const [curve, setCurve] = useState<BezierCurve>(
         new BezierCurve(
-            { x: 50, y: height - 50 }, // bottom left
-            { x: 50, y: 50 }, // top left
-            { x: width - 50, y: 50 }, // top right
-            { x: width - 50, y: height - 50 }, // bottom right
+            new Point(50, height - 50), // bottom left
+            new Point(50, 50), // top left
+            new Point(width - 50, 50), // top right
+            new Point(width - 50, height - 50), // bottom right
         ),
     );
 
@@ -53,20 +55,16 @@ const Bezier = () => {
         const currentPoints = curve.points;
         const newPoint =
             currentPoints.length < 2
-                ? {
-                      x: width / 2,
-                      y: height / 2,
-                  }
-                : {
-                      x:
-                          ((currentPoints.at(-1) as Point).x +
-                              (currentPoints.at(-2) as Point).x) /
+                ? new Point(width / 2, height / 2)
+                : new Point(
+                      ((currentPoints.at(-1) as Point).x +
+                          (currentPoints.at(-2) as Point).x) /
                           2,
-                      y:
-                          ((currentPoints.at(-1) as Point).y +
-                              (currentPoints.at(-2) as Point).y) /
+
+                      ((currentPoints.at(-1) as Point).y +
+                          (currentPoints.at(-2) as Point).y) /
                           2,
-                  };
+                  );
         currentPoints.splice(-1, 0, newPoint);
         setCurve(new BezierCurve(...currentPoints));
     };
