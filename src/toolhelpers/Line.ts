@@ -18,12 +18,11 @@ class Line {
 
     draw = (p5: p5Types) => p5.line(this.a.x, this.a.y, this.b.x, this.b.y);
 
-    pointAlong = (amount: number) => {
-        return new Point(
+    pointAlong = (amount: number) =>
+        new Point(
             this.a.x + (this.b.x - this.a.x) * amount,
             this.a.y + (this.b.y - this.a.y) * amount,
         );
-    };
 
     copy = () => new Line(this.a.copy(), this.a.copy());
 

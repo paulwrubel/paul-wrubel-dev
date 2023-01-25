@@ -1,3 +1,5 @@
+import { Vector } from "./Vector";
+
 class Point {
     x: number;
     y: number;
@@ -7,12 +9,15 @@ class Point {
         this.y = y;
     }
 
-    lerp = (to: Point, amount: number) => {
-        return new Point(
+    to = (p: Point): Vector => new Vector(p.x - this.x, p.y - this.y);
+
+    add = (v: Vector): Point => new Point(this.x + v.x, this.y + v.y);
+
+    lerp = (to: Point, amount: number) =>
+        new Point(
             this.x + (to.x - this.x) * amount,
             this.y + (to.y - this.y) * amount,
         );
-    };
 
     copy = () => new Point(this.x, this.y);
 

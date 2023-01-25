@@ -127,7 +127,7 @@ const BezierSketch = ({
                     p5.pop();
                 });
                 if (lowerOrderCurve.order > 1) {
-                    lowerOrderCurve = lowerOrderCurve.getReducedOrderAt(p5, t);
+                    lowerOrderCurve = lowerOrderCurve.getReducedOrderAt(t);
                 } else {
                     break;
                 }
@@ -139,6 +139,7 @@ const BezierSketch = ({
         p5.noFill();
         p5.strokeWeight(2);
         curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments);
+        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments, 50);
         p5.pop();
 
         // draw point info
@@ -167,15 +168,37 @@ const BezierSketch = ({
         });
 
         // draw the point on the line at t
-        const tPoint = curve.getPointAtT(p5, t);
+        const tPoint = curve.getPointAtT(t);
         p5.push();
         p5.stroke(p5.color("#000"));
         p5.fill(p5.color("#000"));
         p5.circle(tPoint.x, tPoint.y, 10);
         p5.pop();
 
+        // draw the tangent vector
+        const tTangent = curve.getTangentVectorAtT(t);
+        const scaledTangent = tTangent.withMagnitude(20);
+        const tangentPoint = tPoint.add(scaledTangent);
+        p5.push();
+        p5.stroke(p5.color("#000"));
+        p5.fill(p5.color("#000"));
+        p5.line(tPoint.x, tPoint.y, tangentPoint.x, tangentPoint.y);
+        // p5.circle(tPoint.x, tPoint.y, 10);
+        p5.pop();
+
+        // draw the normal vector
+        const tNormal = curve.getNormalVectorAtT(t);
+        const scaledNormal = tNormal.withMagnitude(20);
+        const normalPoint = tPoint.add(scaledNormal);
+        p5.push();
+        p5.stroke(p5.color("#000"));
+        p5.fill(p5.color("#000"));
+        p5.line(tPoint.x, tPoint.y, normalPoint.x, normalPoint.y);
+        // p5.circle(tPoint.x, tPoint.y, 10);
+        p5.pop();
+
         // draw the point on the line at dist
-        const distPoint = curve.getPointAtDist(p5, t);
+        const distPoint = curve.getPointAtDist(t);
         p5.push();
         p5.stroke(p5.color("#00F"));
         p5.fill(p5.color("#00F"));

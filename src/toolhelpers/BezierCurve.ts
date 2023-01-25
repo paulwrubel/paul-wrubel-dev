@@ -2,6 +2,10 @@ import p5Types from "p5";
 
 import { Line } from "./Line";
 import { Point } from "./Point";
+import { Vector } from "./Vector";
+
+const TOutOfBoundsErrorString = "t must be between 0 and 1 inclusive";
+const DistOutOfBoundsErrorString = "dist must be between 0 and 1 inclusive";
 
 class BezierCurve {
     #points: Point[];
@@ -22,12 +26,22 @@ class BezierCurve {
         return this.#points.length - 1;
     }
 
-    draw = (p5: p5Types, maxT: number, numSegments?: number) => {
-        const lines = this.getApproximationSegments(p5, maxT, numSegments);
+    draw = (
+        p5: p5Types,
+        maxT: number,
+        numSegments?: number,
+        offset?: number,
+    ) => {
+        const lines = this.getApproximationSegments(maxT, numSegments, offset);
         lines.forEach((line) => line.draw(p5));
     };
 
-    drawUsingP5 = (p5: p5Types, maxT: number, numSegments?: number) => {
+    drawUsingP5 = (
+        p5: p5Types,
+        maxT: number,
+        numSegments?: number,
+        offset?: number,
+    ) => {
         switch (this.order) {
             case 1: {
                 // linear
@@ -67,7 +81,7 @@ class BezierCurve {
                 break;
             }
             default: {
-                this.draw(p5, maxT, numSegments);
+                this.draw(p5, maxT, numSegments, offset);
             }
         }
     };
@@ -82,14 +96,14 @@ class BezierCurve {
         return lines;
     };
 
-    getPointAtDist = (p5: p5Types, dist: number, numSegments = 100): Point => {
+    getPointAtDist = (dist: number, numSegments = 100): Point => {
         if (dist < 0 || dist > 1) {
-            throw new Error("dist must be between 0 and 1 inclusive");
+            throw new Error(DistOutOfBoundsErrorString);
         }
         if (this.order === 1) {
             return this.#points[0].lerp(this.#points[1], dist);
         }
-        const segments = this.getApproximationSegments(p5, 1.0, numSegments);
+        const segments = this.getApproximationSegments(1.0, numSegments);
         const totalDistance = segments.reduce(
             (acc, segment) => acc + segment.length,
             0,
@@ -109,19 +123,19 @@ class BezierCurve {
         return this.#points[this.#points.length - 1];
     };
 
-    getPointAtT = (p5: p5Types, t: number): Point => {
+    getPointAtT = (t: number): Point => {
         if (t < 0 || t > 1) {
-            throw new Error("t must be between 0 and 1 inclusive");
+            throw new Error(TOutOfBoundsErrorString);
         }
         if (this.order === 1) {
             return this.#points[0].lerp(this.#points[1], t);
         }
-        return this.getReducedOrderAt(p5, t).getPointAtT(p5, t);
+        return this.getReducedOrderAt(t).getPointAtT(t);
     };
 
-    getReducedOrderAt = (p5: p5Types, t: number): BezierCurve => {
+    getReducedOrderAt = (t: number): BezierCurve => {
         if (t < 0 || t > 1) {
-            throw new Error("t must be between 0 and 1 inclusive");
+            throw new Error(TOutOfBoundsErrorString);
         }
         const newPoints: Point[] = [];
         const currentPoints = this.points;
@@ -132,30 +146,54 @@ class BezierCurve {
     };
 
     getApproximationSegments = (
-        p5: p5Types,
         maxT: number,
         numSegments = 100,
+        offset = 0,
     ): Line[] => {
         if (numSegments < 1) {
             throw new Error("segments must be at least 1");
         }
         const interval = maxT / numSegments;
         const segments: Line[] = [];
-        let thisPoint = this.getPointAtT(p5, 0);
+        const prePoint = this.getPointAtT(0);
+        let thisPoint =
+            offset === 0
+                ? prePoint
+                : prePoint.add(this.getNormalVectorAtT(0).mult(offset));
         // for (let i = interval; i <= 1; i += interval) {
         for (let i = 0; i < numSegments; i++) {
             const nextT = interval * (i + 1);
-            const nextPoint = this.getPointAtT(p5, nextT);
+            const nextPrePoint = this.getPointAtT(nextT);
+            const nextPoint =
+                offset === 0
+                    ? nextPrePoint
+                    : nextPrePoint.add(
+                          this.getNormalVectorAtT(nextT).mult(offset),
+                      );
             segments.push(new Line(thisPoint, nextPoint));
             thisPoint = nextPoint;
         }
         return segments;
     };
 
-    copy = () => new BezierCurve(...this.#points.map((p) => p.copy()));
+    getTangentVectorAtT = (t: number): Vector => {
+        if (t < 0 || t > 1) {
+            throw new Error(TOutOfBoundsErrorString);
+        }
+        if (this.order === 1) {
+            return this.#points[0].to(this.#points[1]).unit();
+        }
+        return this.getReducedOrderAt(t).getTangentVectorAtT(t);
+    };
 
-    toString = () =>
-        `CubicBezier(${this.points.map((p) => p.toString()).join()})`;
+    getNormalVectorAtT = (t: number): Vector =>
+        this.getTangentVectorAtT(t).rotate(Math.PI / 2);
+
+    copy = (): BezierCurve =>
+        new BezierCurve(...this.#points.map((p) => p.copy()));
+
+    toString = (): string =>
+        `BezierCurve(${this.points.map((p) => p.toString()).join()})`;
 }
 
 export { BezierCurve };
