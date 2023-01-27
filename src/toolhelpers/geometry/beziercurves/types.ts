@@ -9,41 +9,34 @@ interface BezierCurve {
 
     order: number;
 
-    draw: (
+    draw(p5: p5Types, maxT: number, numSegments: number, offset?: number): void;
+
+    drawUsingP5(
         p5: p5Types,
         maxT: number,
         numSegments: number,
         offset?: number,
-    ) => void;
+    ): void;
 
-    drawUsingP5: (
-        p5: p5Types,
+    getLinesBetweenPoints(): Line[];
+
+    getPointAtDist(dist: number, numSegments: number): Point;
+
+    getPointAtT(t: number): Point;
+
+    getApproximationSegments(
         maxT: number,
         numSegments: number,
         offset?: number,
-    ) => void;
+    ): Line[];
 
-    getLinesBetweenPoints: () => Line[];
+    getTangentVectorAtT(t: number): Vector;
 
-    getPointAtDist: (dist: number, numSegments: number) => Point;
+    getNormalVectorAtT(t: number): Vector;
 
-    getPointAtT: (t: number) => Point;
+    copy(): BezierCurve;
 
-    getReducedOrderAt: (t: number) => BezierCurve;
-
-    getApproximationSegments: (
-        maxT: number,
-        numSegments: number,
-        offset?: number,
-    ) => Line[];
-
-    getTangentVectorAtT: (t: number) => Vector;
-
-    getNormalVectorAtT: (t: number) => Vector;
-
-    copy: () => BezierCurve;
-
-    toString: () => string;
+    toString(): string;
 }
 
 export type { BezierCurve };

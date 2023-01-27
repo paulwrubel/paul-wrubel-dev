@@ -199,7 +199,7 @@ const BezierSketch = ({
         p5.pop();
 
         // draw the point on the line at dist
-        const distPoint = curve.getPointAtDist(t);
+        const distPoint = curve.getPointAtDist(t, approximationSegments);
         p5.push();
         p5.stroke(p5.color("#00F"));
         p5.fill(p5.color("#00F"));
