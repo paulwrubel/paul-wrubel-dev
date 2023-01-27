@@ -1,5 +1,7 @@
-import { BezierCurve } from "./BezierCurve";
-import { Point } from "./Point";
+import { Point } from "../Point";
+
+import { ComplexBezierCurve } from "./ComplexBezierCurve";
+import { BezierCurve } from "./types";
 
 const isPointArray = (
     pointsOrCurves: (Point | BezierCurve)[],
@@ -7,13 +9,13 @@ const isPointArray = (
     return pointsOrCurves.every((poc) => poc instanceof Point);
 };
 
-const isBezierCurveArray = (
+const isComplexBezierCurveArray = (
     pointsOrCurves: (Point | BezierCurve)[],
 ): pointsOrCurves is BezierCurve[] => {
-    return pointsOrCurves.every((poc) => poc instanceof BezierCurve);
+    return pointsOrCurves.every((poc) => poc instanceof ComplexBezierCurve);
 };
 
-class CompoundCubicBezierCurve {
+class CompoundCubicBezierCurve implements BezierCurve {
     #curves: BezierCurve[];
 
     constructor(...pointsOrCurves: (Point | BezierCurve)[]) {
@@ -27,10 +29,10 @@ class CompoundCubicBezierCurve {
             // let currentStartingPoint = points[0];
             for (let i = 0; i < pointsOrCurves.length; i += 3) {
                 this.#curves.push(
-                    new BezierCurve(...pointsOrCurves.slice(i, i + 4)),
+                    new ComplexBezierCurve(...pointsOrCurves.slice(i, i + 4)),
                 );
             }
-        } else if (isBezierCurveArray(pointsOrCurves)) {
+        } else if (isComplexBezierCurveArray(pointsOrCurves)) {
             if (pointsOrCurves.some((curve) => curve.order !== 3)) {
                 throw new Error(
                     `invalid order in some curve passed to CompoundCubicBezierCurve`,
@@ -43,13 +45,17 @@ class CompoundCubicBezierCurve {
         );
     }
 
-    copy = () =>
-        new CompoundCubicBezierCurve(...this.#curves.map((c) => c.copy()));
+    copy(): CompoundCubicBezierCurve {
+        return new CompoundCubicBezierCurve(
+            ...this.#curves.map((c) => c.copy()),
+        );
+    }
 
-    toString = () =>
-        `CompoundCubicBezierCurve(${this.#curves
+    toString(): string {
+        return `CompoundCubicBezierCurve(${this.#curves
             .map((c) => c.toString())
             .join()})`;
+    }
 }
 
 export { CompoundCubicBezierCurve };

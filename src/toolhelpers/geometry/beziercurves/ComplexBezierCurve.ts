@@ -1,13 +1,15 @@
 import p5Types from "p5";
 
-import { Line } from "./Line";
-import { Point } from "./Point";
-import { Vector } from "./Vector";
+import { Line } from "../Line";
+import { Point } from "../Point";
+import { Vector } from "../Vector";
+
+import { BezierCurve } from "./types";
 
 const TOutOfBoundsErrorString = "t must be between 0 and 1 inclusive";
 const DistOutOfBoundsErrorString = "dist must be between 0 and 1 inclusive";
 
-class BezierCurve {
+class ComplexBezierCurve implements BezierCurve {
     #points: Point[];
 
     // start, anchor1, anchor2, ...,  end
@@ -26,22 +28,17 @@ class BezierCurve {
         return this.#points.length - 1;
     }
 
-    draw = (
-        p5: p5Types,
-        maxT: number,
-        numSegments?: number,
-        offset?: number,
-    ) => {
+    draw(p5: p5Types, maxT: number, numSegments: number, offset?: number) {
         const lines = this.getApproximationSegments(maxT, numSegments, offset);
         lines.forEach((line) => line.draw(p5));
-    };
+    }
 
-    drawUsingP5 = (
+    drawUsingP5(
         p5: p5Types,
         maxT: number,
-        numSegments?: number,
+        numSegments: number,
         offset?: number,
-    ) => {
+    ) {
         switch (this.order) {
             case 1: {
                 // linear
@@ -84,9 +81,9 @@ class BezierCurve {
                 this.draw(p5, maxT, numSegments, offset);
             }
         }
-    };
+    }
 
-    getLinesBetweenPoints = (): Line[] => {
+    getLinesBetweenPoints(): Line[] {
         const lines: Line[] = [];
         for (let i = 0; i < this.#points.length - 1; i++) {
             const { x: x1, y: y1 } = this.#points[i];
@@ -94,9 +91,9 @@ class BezierCurve {
             lines.push(new Line(new Point(x1, y1), new Point(x2, y2)));
         }
         return lines;
-    };
+    }
 
-    getPointAtDist = (dist: number, numSegments = 100): Point => {
+    getPointAtDist(dist: number, numSegments: number): Point {
         if (dist < 0 || dist > 1) {
             throw new Error(DistOutOfBoundsErrorString);
         }
@@ -121,9 +118,9 @@ class BezierCurve {
             accumulatedDistance += segments[i].length;
         }
         return this.#points[this.#points.length - 1];
-    };
+    }
 
-    getPointAtT = (t: number): Point => {
+    getPointAtT(t: number): Point {
         if (t < 0 || t > 1) {
             throw new Error(TOutOfBoundsErrorString);
         }
@@ -131,9 +128,9 @@ class BezierCurve {
             return this.#points[0].lerp(this.#points[1], t);
         }
         return this.getReducedOrderAt(t).getPointAtT(t);
-    };
+    }
 
-    getReducedOrderAt = (t: number): BezierCurve => {
+    getReducedOrderAt(t: number): ComplexBezierCurve {
         if (t < 0 || t > 1) {
             throw new Error(TOutOfBoundsErrorString);
         }
@@ -142,14 +139,14 @@ class BezierCurve {
         for (let i = 0; i < currentPoints.length - 1; i++) {
             newPoints.push(currentPoints[i].lerp(currentPoints[i + 1], t));
         }
-        return new BezierCurve(...newPoints);
-    };
+        return new ComplexBezierCurve(...newPoints);
+    }
 
-    getApproximationSegments = (
+    getApproximationSegments(
         maxT: number,
-        numSegments = 100,
+        numSegments: number,
         offset = 0,
-    ): Line[] => {
+    ): Line[] {
         if (numSegments < 1) {
             throw new Error("segments must be at least 1");
         }
@@ -174,9 +171,9 @@ class BezierCurve {
             thisPoint = nextPoint;
         }
         return segments;
-    };
+    }
 
-    getTangentVectorAtT = (t: number): Vector => {
+    getTangentVectorAtT(t: number): Vector {
         if (t < 0 || t > 1) {
             throw new Error(TOutOfBoundsErrorString);
         }
@@ -184,16 +181,19 @@ class BezierCurve {
             return this.#points[0].to(this.#points[1]).unit();
         }
         return this.getReducedOrderAt(t).getTangentVectorAtT(t);
-    };
+    }
 
-    getNormalVectorAtT = (t: number): Vector =>
-        this.getTangentVectorAtT(t).rotate(Math.PI / 2);
+    getNormalVectorAtT(t: number): Vector {
+        return this.getTangentVectorAtT(t).rotate(Math.PI / 2);
+    }
 
-    copy = (): BezierCurve =>
-        new BezierCurve(...this.#points.map((p) => p.copy()));
+    copy(): ComplexBezierCurve {
+        return new ComplexBezierCurve(...this.#points.map((p) => p.copy()));
+    }
 
-    toString = (): string =>
-        `BezierCurve(${this.points.map((p) => p.toString()).join()})`;
+    toString(): string {
+        return `BezierCurve(${this.points.map((p) => p.toString()).join()})`;
+    }
 }
 
-export { BezierCurve };
+export { ComplexBezierCurve };

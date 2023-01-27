@@ -1,9 +1,10 @@
 import p5Types from "p5";
 import Sketch from "react-p5";
 
-import { BezierCurve } from "toolhelpers/BezierCurve";
-import { Line } from "toolhelpers/Line";
-import { Point } from "toolhelpers/Point";
+import { ComplexBezierCurve } from "toolhelpers/geometry/beziercurves/ComplexBezierCurve";
+import { BezierCurve } from "toolhelpers/geometry/beziercurves/types";
+import { Line } from "toolhelpers/geometry/Line";
+import { Point } from "toolhelpers/geometry/Point";
 
 const pointDragRadius = 30;
 
