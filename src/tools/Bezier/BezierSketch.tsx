@@ -138,8 +138,8 @@ const BezierSketch = ({
         p5.push();
         p5.noFill();
         p5.strokeWeight(2);
-        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments);
-        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments, 50);
+        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments, -30);
+        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments, 30);
         p5.pop();
 
         // draw point info
