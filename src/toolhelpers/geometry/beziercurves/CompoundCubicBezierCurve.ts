@@ -29,14 +29,17 @@ class CompoundCubicBezierCurve implements BezierCurve {
 
     constructor(...pointsOrCurves: (Point | BezierCurve)[]) {
         if (isPointArray(pointsOrCurves)) {
-            if ((pointsOrCurves.length - 1) % 3 !== 0) {
+            if (
+                pointsOrCurves.length < 4 ||
+                (pointsOrCurves.length - 1) % 3 !== 0
+            ) {
                 throw new Error(
                     `invalid number of points passed to CompoundCubicBezierCurve: ${pointsOrCurves.length}`,
                 );
             }
             this.#curves = [];
             // let currentStartingPoint = points[0];
-            for (let i = 0; i < pointsOrCurves.length; i += 3) {
+            for (let i = 0; i < pointsOrCurves.length - 1; i += 3) {
                 this.#curves.push(
                     new ComplexBezierCurve(...pointsOrCurves.slice(i, i + 4)),
                 );
@@ -48,42 +51,36 @@ class CompoundCubicBezierCurve implements BezierCurve {
                 );
             }
             this.#curves = pointsOrCurves.slice();
+        } else {
+            throw new Error(
+                `invalid type of array element passed to CompoundCubicBezierCurve`,
+            );
         }
-        throw new Error(
-            `invalid type of array element passed to CompoundCubicBezierCurve`,
-        );
     }
 
     get points(): Point[] {
-        return this.#curves.flatMap((curve) => curve.points);
+        return [
+            this.#curves[0].points[0],
+            ...this.#curves.flatMap((curve) => curve.points.slice(1)),
+        ];
     }
 
     get order(): number {
         return 3;
     }
 
-    draw(
-        p5: p5Types,
-        maxT: number,
-        numSegments: number,
-        offset?: number | undefined,
-    ) {
-        const perCurveSegments = Math.ceil(numSegments / this.#curves.length);
-        this.#curves.forEach((curve) =>
-            curve.draw(p5, maxT, perCurveSegments, offset),
-        );
+    draw(p5: p5Types, maxT: number, numSegments: number, offset?: number) {
+        const lines = this.getApproximationSegments(maxT, numSegments, offset);
+        lines.forEach((line) => line.draw(p5));
     }
 
     drawUsingP5(
         p5: p5Types,
         maxT: number,
         numSegments: number,
-        offset?: number | undefined,
+        offset?: number,
     ) {
-        const perCurveSegments = Math.ceil(numSegments / this.#curves.length);
-        this.#curves.forEach((curve) =>
-            curve.drawUsingP5(p5, maxT, perCurveSegments, offset),
-        );
+        this.draw(p5, maxT, numSegments, offset);
     }
 
     getLinesBetweenPoints(): Line[] {
@@ -124,11 +121,10 @@ class CompoundCubicBezierCurve implements BezierCurve {
         if (t === 1) {
             return { index: this.#curves.length - 1, translatedT: 1 };
         }
-
         const decimalT = new Decimal(t);
-        const interval = Decimal.div(1, length);
+        const interval = Decimal.div(1, this.#curves.length);
         const index = decimalT.dividedToIntegerBy(interval);
-        const translatedT = decimalT.mod(interval).times(length);
+        const translatedT = decimalT.mod(interval).times(this.#curves.length);
 
         return {
             index: +index,
@@ -141,6 +137,7 @@ class CompoundCubicBezierCurve implements BezierCurve {
             throw new Error(TOutOfBoundsErrorString);
         }
         const { index, translatedT } = this.#getIndexAndTranslatedTFromT(t);
+        // console.log(`index: ${index}, tt: ${translatedT}`);
 
         // if (t === 1) {
         //     return this.#curves.at(-1)?.points.at(-1) as Point;

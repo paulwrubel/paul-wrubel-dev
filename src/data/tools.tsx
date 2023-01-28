@@ -1,4 +1,5 @@
-import Bezier from "tools/Bezier";
+import BezierComplex from "tools/BezierComplex";
+import BezierCompound from "tools/BezierCompound";
 import FABRIK from "tools/FABRIK";
 import MergeMania from "tools/MergeMania";
 import MergeManiaProto from "tools/MergeManiaProto";
@@ -33,9 +34,14 @@ const tools: Tool[] = [
         component: <FABRIK />,
     },
     {
-        name: "bezier",
-        description: "an n-th dimensional bezier curve demonstration.",
-        component: <Bezier />,
+        name: "bezier-complex",
+        description: "an n-th dimensional complex bezier curve demonstration.",
+        component: <BezierComplex />,
+    },
+    {
+        name: "bezier-compound",
+        description: "a compound cubic bezier curve demonstration.",
+        component: <BezierCompound />,
     },
     {
         name: "peer-pong",
