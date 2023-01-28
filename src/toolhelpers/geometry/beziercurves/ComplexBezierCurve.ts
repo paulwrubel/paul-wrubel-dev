@@ -4,7 +4,11 @@ import { Line } from "../Line";
 import { Point } from "../Point";
 import { Vector } from "../Vector";
 
-import { BezierCurve } from "./types";
+import {
+    BezierCurve,
+    DistOutOfBoundsErrorString,
+    TOutOfBoundsErrorString,
+} from "./types";
 
 class ComplexBezierCurve implements BezierCurve {
     #points: Point[];

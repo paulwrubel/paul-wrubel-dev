@@ -1,3 +1,4 @@
+import { Decimal } from "decimal.js";
 import p5Types from "p5";
 
 import { Line } from "../Line";
@@ -92,11 +93,16 @@ class CompoundCubicBezierCurve implements BezierCurve {
         if (t < 0 || t > 1) {
             throw new Error(TOutOfBoundsErrorString);
         }
-
-        if (this.order === 1) {
-            return this.#points[0].lerp(this.#points[1], t);
+        if (t === 1) {
+            return this.#curves.at(-1)?.points.at(-1) as Point;
         }
-        return this.getReducedOrderAt(t).getPointAtT(t);
+
+        const decimalT = new Decimal(t);
+        const interval = Decimal.div(1, length);
+        const index = decimalT.dividedToIntegerBy(interval);
+        const translatedT = decimalT.mod(interval).times(length);
+
+        return this.#curves[+index].getPointAtT(+translatedT);
     }
 
     getApproximationSegments(

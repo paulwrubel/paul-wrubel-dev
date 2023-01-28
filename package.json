@@ -9,6 +9,7 @@
     "@mui/material": "^5.11.3",
     "bezier-easing": "^2.1.0",
     "dayjs": "^1.11.7",
+    "decimal.js": "^10.4.3",
     "peerjs": "^1.4.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
