@@ -3,9 +3,14 @@ import p5Types from "p5";
 
 import { Line } from "../Line";
 import { Point } from "../Point";
+import { Vector } from "../Vector";
 
 import { ComplexBezierCurve } from "./ComplexBezierCurve";
-import { BezierCurve, TOutOfBoundsErrorString } from "./types";
+import {
+    BezierCurve,
+    DistOutOfBoundsErrorString,
+    TOutOfBoundsErrorString,
+} from "./types";
 
 const isPointArray = (
     pointsOrCurves: (Point | BezierCurve)[],
@@ -86,15 +91,38 @@ class CompoundCubicBezierCurve implements BezierCurve {
     }
 
     getPointAtDist(dist: number, numSegments: number): Point {
-        // TODO
+        if (dist < 0 || dist > 1) {
+            throw new Error(DistOutOfBoundsErrorString);
+        }
+        const segments = this.getApproximationSegments(1.0, numSegments);
+        const totalDistance = segments.reduce(
+            (acc, segment) => acc + segment.length,
+            0,
+        );
+        const targetDist = totalDistance * dist;
+        let accumulatedDistance = 0;
+        for (let i = 0; i < segments.length; i++) {
+            const newAccumulatedDistance =
+                accumulatedDistance + segments[i].length;
+            if (newAccumulatedDistance > targetDist) {
+                return segments[i].pointAlong(
+                    (targetDist - accumulatedDistance) / segments[i].length,
+                );
+            }
+            accumulatedDistance += segments[i].length;
+        }
+        return this.#curves.at(-1)?.points.at(-1) as Point;
     }
 
-    getPointAtT(t: number): Point {
+    #getIndexAndTranslatedTFromT(t: number): {
+        index: number;
+        translatedT: number;
+    } {
         if (t < 0 || t > 1) {
             throw new Error(TOutOfBoundsErrorString);
         }
         if (t === 1) {
-            return this.#curves.at(-1)?.points.at(-1) as Point;
+            return { index: this.#curves.length - 1, translatedT: 1 };
         }
 
         const decimalT = new Decimal(t);
@@ -102,13 +130,34 @@ class CompoundCubicBezierCurve implements BezierCurve {
         const index = decimalT.dividedToIntegerBy(interval);
         const translatedT = decimalT.mod(interval).times(length);
 
-        return this.#curves[+index].getPointAtT(+translatedT);
+        return {
+            index: +index,
+            translatedT: +translatedT,
+        };
+    }
+
+    getPointAtT(t: number): Point {
+        if (t < 0 || t > 1) {
+            throw new Error(TOutOfBoundsErrorString);
+        }
+        const { index, translatedT } = this.#getIndexAndTranslatedTFromT(t);
+
+        // if (t === 1) {
+        //     return this.#curves.at(-1)?.points.at(-1) as Point;
+        // }
+
+        // const decimalT = new Decimal(t);
+        // const interval = Decimal.div(1, length);
+        // const index = decimalT.dividedToIntegerBy(interval);
+        // const translatedT = decimalT.mod(interval).times(length);
+
+        return this.#curves[index].getPointAtT(translatedT);
     }
 
     getApproximationSegments(
         maxT: number,
         numSegments: number,
-        offset?: number | undefined,
+        offset = 0,
     ): Line[] {
         if (numSegments < 1) {
             throw new Error("segments must be at least 1");
@@ -134,11 +183,18 @@ class CompoundCubicBezierCurve implements BezierCurve {
             thisPoint = nextPoint;
         }
         return segments;
+    }
 
-        const perCurveSegments = Math.ceil(numSegments / this.#curves.length);
-        return this.#curves.flatMap((curve) =>
-            curve.getApproximationSegments(maxT, perCurveSegments, offset),
-        );
+    getTangentVectorAtT(t: number): Vector {
+        if (t < 0 || t > 1) {
+            throw new Error(TOutOfBoundsErrorString);
+        }
+        const { index, translatedT } = this.#getIndexAndTranslatedTFromT(t);
+        return this.#curves[index].getTangentVectorAtT(translatedT);
+    }
+
+    getNormalVectorAtT(t: number): Vector {
+        return this.getTangentVectorAtT(t).rotate(Math.PI / 2);
     }
 
     copy(): CompoundCubicBezierCurve {
