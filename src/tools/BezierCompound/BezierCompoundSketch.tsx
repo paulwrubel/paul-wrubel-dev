@@ -12,7 +12,7 @@ const startColor = "#191";
 const anchorColor = "#333";
 const endColor = "#933";
 
-const colorsByOrder = ["#999", "#9D9", "#99D", "#D99", "#DD9", "#D9D", "#9DD"];
+// const colorsByOrder = ["#999", "#9D9", "#99D", "#D99", "#DD9", "#D9D", "#9DD"];
 
 let indexBeingDragged = -1;
 const pointOffset: Point = new Point(0, 0);

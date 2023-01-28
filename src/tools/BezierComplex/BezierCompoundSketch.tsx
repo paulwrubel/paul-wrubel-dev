@@ -54,6 +54,45 @@ const BezierSketch = ({
         });
     };
 
+    const drawLowerOrderCurveFeatures = (p5: p5Types) => {
+        if (curve.order > 1) {
+            let lowerOrderCurve = curve;
+            let colorIndex = 0;
+            do {
+                // find the color for this order
+                const color = p5.color(
+                    colorsByOrder[colorIndex % colorsByOrder.length],
+                );
+                colorIndex++;
+
+                // draw lines between the points
+                lowerOrderCurve
+                    .getLinesBetweenPoints()
+                    .forEach(({ a: { x: x1, y: y1 }, b: { x: x2, y: y2 } }) => {
+                        p5.push();
+                        p5.stroke(color);
+                        p5.line(x1, y1, x2, y2);
+                        p5.pop();
+                    });
+                // draw the points
+                lowerOrderCurve.points.forEach(({ x, y }) => {
+                    p5.push();
+                    p5.stroke(color);
+                    p5.strokeWeight(3);
+                    p5.noFill();
+                    // p5.fill(color);
+                    p5.circle(x, y, 5);
+                    p5.pop();
+                });
+                if (lowerOrderCurve.order > 1) {
+                    lowerOrderCurve = lowerOrderCurve.getReducedOrderAt(t);
+                } else {
+                    break;
+                }
+            } while (lowerOrderCurve.order > 0);
+        }
+    };
+
     const mousePressedOrTouchStarted = (p5: p5Types) => {
         for (let i = 0; i < curve.points.length; i++) {
             const point = curve.points[i];
@@ -97,42 +136,7 @@ const BezierSketch = ({
         p5.background(p5.color("#EEE"));
 
         // draw guidelines for our order and all lower
-        if (curve.order > 1) {
-            let lowerOrderCurve = curve;
-            let colorIndex = 0;
-            do {
-                // find the color for this order
-                const color = p5.color(
-                    colorsByOrder[colorIndex % colorsByOrder.length],
-                );
-                colorIndex++;
-
-                // draw lines between the points
-                lowerOrderCurve
-                    .getLinesBetweenPoints()
-                    .forEach(({ a: { x: x1, y: y1 }, b: { x: x2, y: y2 } }) => {
-                        p5.push();
-                        p5.stroke(color);
-                        p5.line(x1, y1, x2, y2);
-                        p5.pop();
-                    });
-                // draw the points
-                lowerOrderCurve.points.forEach(({ x, y }) => {
-                    p5.push();
-                    p5.stroke(color);
-                    p5.strokeWeight(3);
-                    p5.noFill();
-                    // p5.fill(color);
-                    p5.circle(x, y, 5);
-                    p5.pop();
-                });
-                if (lowerOrderCurve.order > 1) {
-                    lowerOrderCurve = lowerOrderCurve.getReducedOrderAt(t);
-                } else {
-                    break;
-                }
-            } while (lowerOrderCurve.order > 0);
-        }
+        drawLowerOrderCurveFeatures(p5);
 
         // draw the curve itself
         p5.push();
