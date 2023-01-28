@@ -4,7 +4,7 @@ import { Line } from "../Line";
 import { Point } from "../Point";
 
 import { ComplexBezierCurve } from "./ComplexBezierCurve";
-import { BezierCurve } from "./types";
+import { BezierCurve, TOutOfBoundsErrorString } from "./types";
 
 const isPointArray = (
     pointsOrCurves: (Point | BezierCurve)[],
@@ -89,7 +89,13 @@ class CompoundCubicBezierCurve implements BezierCurve {
     }
 
     getPointAtT(t: number): Point {
-        // TODO
+        if (t < 0 || t > 1) {
+            throw new Error(TOutOfBoundsErrorString);
+        }
+        if (this.order === 1) {
+            return this.#points[0].lerp(this.#points[1], t);
+        }
+        return this.getReducedOrderAt(t).getPointAtT(t);
     }
 
     getApproximationSegments(

@@ -4,6 +4,9 @@ import { Line } from "../Line";
 import { Point } from "../Point";
 import { Vector } from "../Vector";
 
+const TOutOfBoundsErrorString = "t must be between 0 and 1 inclusive";
+const DistOutOfBoundsErrorString = "dist must be between 0 and 1 inclusive";
+
 interface BezierCurve {
     points: Point[];
 
@@ -39,4 +42,5 @@ interface BezierCurve {
     toString(): string;
 }
 
+export { TOutOfBoundsErrorString, DistOutOfBoundsErrorString };
 export type { BezierCurve };
