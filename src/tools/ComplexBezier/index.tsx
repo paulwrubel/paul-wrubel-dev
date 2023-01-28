@@ -9,10 +9,10 @@ import {
     Typography,
 } from "@mui/material";
 
-import { BezierCurve } from "toolhelpers/BezierCurve";
-import { Point } from "toolhelpers/Point";
+import { ComplexBezierCurve } from "toolhelpers/geometry/beziercurves/ComplexBezierCurve";
+import { Point } from "toolhelpers/geometry/Point";
 
-import BezierSketch from "./BezierSketch";
+import BezierSketch from "./ComplexBezierSketch";
 
 const width = Math.min(1000, window.innerWidth - 10);
 const height = Math.min(600, window.innerHeight - 350);
@@ -20,8 +20,8 @@ const height = Math.min(600, window.innerHeight - 350);
 const fontFamily = '"Source Code Pro", monospace';
 
 const Bezier = () => {
-    const [curve, setCurve] = useState<BezierCurve>(
-        new BezierCurve(
+    const [curve, setCurve] = useState<ComplexBezierCurve>(
+        new ComplexBezierCurve(
             new Point(50, height - 50), // bottom left
             new Point(50, 50), // top left
             new Point(width - 50, 50), // top right
@@ -66,14 +66,14 @@ const Bezier = () => {
                           2,
                   );
         currentPoints.splice(-1, 0, newPoint);
-        setCurve(new BezierCurve(...currentPoints));
+        setCurve(new ComplexBezierCurve(...currentPoints));
     };
 
     const handleRemovePoint = () => {
         const currentPoints = curve.points;
         if (currentPoints.length > 2) {
             currentPoints.splice(-2, 1);
-            setCurve(new BezierCurve(...currentPoints));
+            setCurve(new ComplexBezierCurve(...currentPoints));
         }
     };
 

@@ -1,4 +1,4 @@
-import Bezier from "tools/Bezier";
+import Bezier from "tools/ComplexBezier";
 import FABRIK from "tools/FABRIK";
 import MergeMania from "tools/MergeMania";
 import MergeManiaProto from "tools/MergeManiaProto";

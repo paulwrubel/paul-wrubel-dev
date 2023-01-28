@@ -2,7 +2,6 @@ import p5Types from "p5";
 import Sketch from "react-p5";
 
 import { ComplexBezierCurve } from "toolhelpers/geometry/beziercurves/ComplexBezierCurve";
-import { BezierCurve } from "toolhelpers/geometry/beziercurves/types";
 import { Line } from "toolhelpers/geometry/Line";
 import { Point } from "toolhelpers/geometry/Point";
 
@@ -27,7 +26,7 @@ const BezierSketch = ({
 }: {
     width: number;
     height: number;
-    curve: BezierCurve;
+    curve: ComplexBezierCurve;
     t: number;
     shouldShowProgress: boolean;
     approximationSegments: number;
@@ -117,13 +116,13 @@ const BezierSketch = ({
                         p5.line(x1, y1, x2, y2);
                         p5.pop();
                     });
+
                 // draw the points
                 lowerOrderCurve.points.forEach(({ x, y }) => {
                     p5.push();
                     p5.stroke(color);
                     p5.strokeWeight(3);
                     p5.noFill();
-                    // p5.fill(color);
                     p5.circle(x, y, 5);
                     p5.pop();
                 });
@@ -139,8 +138,7 @@ const BezierSketch = ({
         p5.push();
         p5.noFill();
         p5.strokeWeight(2);
-        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments, -30);
-        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments, 30);
+        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments);
         p5.pop();
 
         // draw point info
@@ -174,28 +172,6 @@ const BezierSketch = ({
         p5.stroke(p5.color("#000"));
         p5.fill(p5.color("#000"));
         p5.circle(tPoint.x, tPoint.y, 10);
-        p5.pop();
-
-        // draw the tangent vector
-        const tTangent = curve.getTangentVectorAtT(t);
-        const scaledTangent = tTangent.withMagnitude(20);
-        const tangentPoint = tPoint.add(scaledTangent);
-        p5.push();
-        p5.stroke(p5.color("#000"));
-        p5.fill(p5.color("#000"));
-        p5.line(tPoint.x, tPoint.y, tangentPoint.x, tangentPoint.y);
-        // p5.circle(tPoint.x, tPoint.y, 10);
-        p5.pop();
-
-        // draw the normal vector
-        const tNormal = curve.getNormalVectorAtT(t);
-        const scaledNormal = tNormal.withMagnitude(20);
-        const normalPoint = tPoint.add(scaledNormal);
-        p5.push();
-        p5.stroke(p5.color("#000"));
-        p5.fill(p5.color("#000"));
-        p5.line(tPoint.x, tPoint.y, normalPoint.x, normalPoint.y);
-        // p5.circle(tPoint.x, tPoint.y, 10);
         p5.pop();
 
         // draw the point on the line at dist
