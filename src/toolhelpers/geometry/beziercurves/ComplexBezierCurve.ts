@@ -6,9 +6,6 @@ import { Vector } from "../Vector";
 
 import { BezierCurve } from "./types";
 
-const TOutOfBoundsErrorString = "t must be between 0 and 1 inclusive";
-const DistOutOfBoundsErrorString = "dist must be between 0 and 1 inclusive";
-
 class ComplexBezierCurve implements BezierCurve {
     #points: Point[];
 

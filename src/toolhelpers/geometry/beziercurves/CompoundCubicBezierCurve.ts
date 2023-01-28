@@ -92,6 +92,7 @@ class CompoundCubicBezierCurve implements BezierCurve {
         if (t < 0 || t > 1) {
             throw new Error(TOutOfBoundsErrorString);
         }
+
         if (this.order === 1) {
             return this.#points[0].lerp(this.#points[1], t);
         }
