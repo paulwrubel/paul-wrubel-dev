@@ -19,9 +19,13 @@ class Point {
             this.y + (to.y - this.y) * amount,
         );
 
-    copy = () => new Point(this.x, this.y);
+    copy(): Point {
+        return new Point(this.x, this.y);
+    }
 
-    toString = () => `(${this.x},${this.y})`;
+    toString(): string {
+        return `(${this.x},${this.y})`;
+    }
 }
 
 export { Point };

@@ -16,17 +16,24 @@ class Line {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    draw = (p5: p5Types) => p5.line(this.a.x, this.a.y, this.b.x, this.b.y);
+    draw(p5: p5Types) {
+        return p5.line(this.a.x, this.a.y, this.b.x, this.b.y);
+    }
 
-    pointAlong = (amount: number) =>
-        new Point(
+    pointAlong(amount: number): Point {
+        return new Point(
             this.a.x + (this.b.x - this.a.x) * amount,
             this.a.y + (this.b.y - this.a.y) * amount,
         );
+    }
 
-    copy = () => new Line(this.a.copy(), this.a.copy());
+    copy(): Line {
+        return new Line(this.a.copy(), this.a.copy());
+    }
 
-    toString = () => `(${this.a} <--> ${this.b})`;
+    toString(): string {
+        return `(${this.a} <--> ${this.b})`;
+    }
 }
 
 export { Line };
