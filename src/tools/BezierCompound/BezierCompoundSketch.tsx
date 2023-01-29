@@ -1,9 +1,10 @@
 import p5Types from "p5";
 import Sketch from "react-p5";
 
-import { BezierCurve } from "toolhelpers/BezierCurve";
-import { Line } from "toolhelpers/Line";
-import { Point } from "toolhelpers/Point";
+import { CompoundCubicBezierCurve } from "toolhelpers/geometry/beziercurves/CompoundCubicBezierCurve";
+// import { BezierCurve } from "toolhelpers/geometry/beziercurves/types";
+import { Line } from "toolhelpers/geometry/Line";
+import { Point } from "toolhelpers/geometry/Point";
 
 const pointDragRadius = 30;
 
@@ -11,7 +12,7 @@ const startColor = "#191";
 const anchorColor = "#333";
 const endColor = "#933";
 
-const colorsByOrder = ["#999", "#9D9", "#99D", "#D99", "#DD9", "#D9D", "#9DD"];
+// const colorsByOrder = ["#999", "#9D9", "#99D", "#D99", "#DD9", "#D9D", "#9DD"];
 
 let indexBeingDragged = -1;
 const pointOffset: Point = new Point(0, 0);
@@ -26,7 +27,7 @@ const BezierSketch = ({
 }: {
     width: number;
     height: number;
-    curve: BezierCurve;
+    curve: CompoundCubicBezierCurve;
     t: number;
     shouldShowProgress: boolean;
     approximationSegments: number;
@@ -97,48 +98,49 @@ const BezierSketch = ({
         p5.background(p5.color("#EEE"));
 
         // draw guidelines for our order and all lower
-        if (curve.order > 1) {
-            let lowerOrderCurve = curve;
-            let colorIndex = 0;
-            do {
-                // find the color for this order
-                const color = p5.color(
-                    colorsByOrder[colorIndex % colorsByOrder.length],
-                );
-                colorIndex++;
+        // if (curve.order > 1) {
+        //     let lowerOrderCurve = curve;
+        //     let colorIndex = 0;
+        //     do {
+        //         // find the color for this order
+        //         const color = p5.color(
+        //             colorsByOrder[colorIndex % colorsByOrder.length],
+        //         );
+        //         colorIndex++;
 
-                // draw lines between the points
-                lowerOrderCurve
-                    .getLinesBetweenPoints()
-                    .forEach(({ a: { x: x1, y: y1 }, b: { x: x2, y: y2 } }) => {
-                        p5.push();
-                        p5.stroke(color);
-                        p5.line(x1, y1, x2, y2);
-                        p5.pop();
-                    });
-                // draw the points
-                lowerOrderCurve.points.forEach(({ x, y }) => {
-                    p5.push();
-                    p5.stroke(color);
-                    p5.strokeWeight(3);
-                    p5.noFill();
-                    // p5.fill(color);
-                    p5.circle(x, y, 5);
-                    p5.pop();
-                });
-                if (lowerOrderCurve.order > 1) {
-                    lowerOrderCurve = lowerOrderCurve.getReducedOrderAt(p5, t);
-                } else {
-                    break;
-                }
-            } while (lowerOrderCurve.order > 0);
-        }
+        //         // draw lines between the points
+        //         lowerOrderCurve
+        //             .getLinesBetweenPoints()
+        //             .forEach(({ a: { x: x1, y: y1 }, b: { x: x2, y: y2 } }) => {
+        //                 p5.push();
+        //                 p5.stroke(color);
+        //                 p5.line(x1, y1, x2, y2);
+        //                 p5.pop();
+        //             });
+        //         // draw the points
+        //         lowerOrderCurve.points.forEach(({ x, y }) => {
+        //             p5.push();
+        //             p5.stroke(color);
+        //             p5.strokeWeight(3);
+        //             p5.noFill();
+        //             // p5.fill(color);
+        //             p5.circle(x, y, 5);
+        //             p5.pop();
+        //         });
+        //         if (lowerOrderCurve.order > 1) {
+        //             lowerOrderCurve = lowerOrderCurve.getReducedOrderAt(t);
+        //         } else {
+        //             break;
+        //         }
+        //     } while (lowerOrderCurve.order > 0);
+        // }
 
         // draw the curve itself
         p5.push();
         p5.noFill();
         p5.strokeWeight(2);
-        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments);
+        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments, -30);
+        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments, 30);
         p5.pop();
 
         // draw point info
@@ -167,15 +169,37 @@ const BezierSketch = ({
         });
 
         // draw the point on the line at t
-        const tPoint = curve.getPointAtT(p5, t);
+        const tPoint = curve.getPointAtT(t);
         p5.push();
         p5.stroke(p5.color("#000"));
         p5.fill(p5.color("#000"));
         p5.circle(tPoint.x, tPoint.y, 10);
         p5.pop();
 
+        // draw the tangent vector
+        const tTangent = curve.getTangentVectorAtT(t);
+        const scaledTangent = tTangent.withMagnitude(20);
+        const tangentPoint = tPoint.add(scaledTangent);
+        p5.push();
+        p5.stroke(p5.color("#000"));
+        p5.fill(p5.color("#000"));
+        p5.line(tPoint.x, tPoint.y, tangentPoint.x, tangentPoint.y);
+        // p5.circle(tPoint.x, tPoint.y, 10);
+        p5.pop();
+
+        // draw the normal vector
+        const tNormal = curve.getNormalVectorAtT(t);
+        const scaledNormal = tNormal.withMagnitude(20);
+        const normalPoint = tPoint.add(scaledNormal);
+        p5.push();
+        p5.stroke(p5.color("#000"));
+        p5.fill(p5.color("#000"));
+        p5.line(tPoint.x, tPoint.y, normalPoint.x, normalPoint.y);
+        // p5.circle(tPoint.x, tPoint.y, 10);
+        p5.pop();
+
         // draw the point on the line at dist
-        const distPoint = curve.getPointAtDist(p5, t);
+        const distPoint = curve.getPointAtDist(t, approximationSegments);
         p5.push();
         p5.stroke(p5.color("#00F"));
         p5.fill(p5.color("#00F"));
