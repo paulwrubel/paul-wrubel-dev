@@ -142,6 +142,22 @@ const Bezier = () => {
                             },
                         }}
                     />
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={shouldShowProgress}
+                                onChange={handleShouldShowProgressChange}
+                            />
+                        }
+                        label="force curve smoothness"
+                        componentsProps={{
+                            typography: {
+                                sx: {
+                                    fontFamily: fontFamily,
+                                },
+                            },
+                        }}
+                    />
                     <Button
                         variant="outlined"
                         onClick={handleRemovePoint}
@@ -149,7 +165,7 @@ const Bezier = () => {
                             fontFamily: fontFamily,
                         }}
                     >
-                        remove point
+                        remove curve
                     </Button>
                     <Button
                         variant="contained"
@@ -158,7 +174,7 @@ const Bezier = () => {
                             fontFamily: fontFamily,
                         }}
                     >
-                        add point
+                        add curve
                     </Button>
                 </Box>
             </Box>
