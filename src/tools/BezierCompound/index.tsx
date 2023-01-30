@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { OfflineShareTwoTone } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -12,27 +13,33 @@ import {
 import { CompoundCubicBezierCurve } from "toolhelpers/geometry/beziercurves/CompoundCubicBezierCurve";
 import { Point } from "toolhelpers/geometry/Point";
 
-import BezierSketch from "./BezierCompoundSketch";
+import BezierCompoundSketch from "./BezierCompoundSketch";
 
 const width = Math.min(1000, window.innerWidth - 10);
 const height = Math.min(600, window.innerHeight - 350);
+
+const pointSpacing = 100;
 
 const fontFamily = '"Source Code Pro", monospace';
 
 const Bezier = () => {
     const [curve, setCurve] = useState<CompoundCubicBezierCurve>(
         new CompoundCubicBezierCurve(
-            new Point(50, height - 50), // bottom left
-            new Point(50, 50), // top left
-            new Point(width - 50, 50), // top right
-            new Point(width - 50, height - 50), // bottom right
+            new Point(pointSpacing / 2, height / 2), // far left bottom
+            new Point(pointSpacing / 2, height / 2 - pointSpacing), // far left top
+            new Point(pointSpacing * 1.5, height / 2 - pointSpacing), // near left top
+            new Point(pointSpacing * 1.5, height / 2), // near left bottom
         ),
     );
 
     const [t, setT] = useState<number>(0.5);
     const [approximationSegments, setApproximationSegments] =
         useState<number>(50);
+    const [offset, setOffset] = useState<number>(0);
+
     const [shouldShowProgress, setShouldShowProgress] = useState<boolean>(true);
+    const [shouldForceCurveSmoothness, setShouldForceCurveSmoothness] =
+        useState<boolean>(false);
 
     const handleTChange = (_: Event, newValue: number | number[]) => {
         setT(newValue as number);
@@ -44,6 +51,9 @@ const Bezier = () => {
     ) => {
         setApproximationSegments(newValue as number);
     };
+    const handleOffsetChange = (_: Event, newValue: number | number[]) => {
+        setOffset(newValue as number);
+    };
 
     const handleShouldShowProgressChange = (
         event: React.ChangeEvent<HTMLInputElement>,
@@ -51,13 +61,28 @@ const Bezier = () => {
         setShouldShowProgress(event.target.checked);
     };
 
+    const handleShouldForceCurveSmoothnessChange = (
+        event: React.ChangeEvent<HTMLInputElement>,
+    ) => {
+        setShouldForceCurveSmoothness(event.target.checked);
+    };
+
     const handleAddPoint = () => {
         const currentPoints = curve.points;
-        const newPoints = [
-            new Point(width / 2, height / 2),
-            new Point(width / 2 + 50, height / 2 + 50),
-            new Point(width / 2 + 100, height / 2 + 100),
-        ];
+        let finalPoint = currentPoints.at(-1) as Point;
+        const penultimatePoint = currentPoints.at(-2) as Point;
+        let directionVector = penultimatePoint
+            .to(finalPoint)
+            .withMagnitude(pointSpacing);
+
+        const rotationDegrees = curve.curveCount % 2 === 0 ? 90 : -90;
+        const newPoints: Point[] = [];
+        for (let i = 0; i < 3; i++) {
+            const newPoint = finalPoint.add(directionVector);
+            newPoints.push(newPoint);
+            finalPoint = newPoint;
+            directionVector = directionVector.rotateDegrees(rotationDegrees);
+        }
         currentPoints.push(...newPoints);
         setCurve(new CompoundCubicBezierCurve(...currentPoints));
     };
@@ -72,12 +97,14 @@ const Bezier = () => {
 
     return (
         <>
-            <BezierSketch
+            <BezierCompoundSketch
                 width={width}
                 height={height}
                 curve={curve}
                 t={t}
+                offset={offset}
                 shouldShowProgress={shouldShowProgress}
+                shouldEnforceSmoothness={shouldForceCurveSmoothness}
                 approximationSegments={approximationSegments}
             />
             <Box
@@ -105,7 +132,7 @@ const Bezier = () => {
                     aria-labelledby="t-typography"
                 />
                 <Typography
-                    id="t-typography"
+                    id="approximation-segments-typography"
                     fontFamily='"Source Code Pro", monospace'
                 >
                     # segments: {approximationSegments}
@@ -118,6 +145,21 @@ const Bezier = () => {
                     step={1}
                     valueLabelDisplay="auto"
                     aria-labelledby="approximation-segments-typography"
+                />
+                <Typography
+                    id="offset-typography"
+                    fontFamily='"Source Code Pro", monospace'
+                >
+                    offset: {offset}
+                </Typography>
+                <Slider
+                    value={offset}
+                    onChange={handleOffsetChange}
+                    min={-50}
+                    max={50}
+                    step={1}
+                    valueLabelDisplay="auto"
+                    aria-labelledby="offset-typography"
                 />
                 <Box
                     sx={{
@@ -145,8 +187,10 @@ const Bezier = () => {
                     <FormControlLabel
                         control={
                             <Switch
-                                checked={shouldShowProgress}
-                                onChange={handleShouldShowProgressChange}
+                                checked={shouldForceCurveSmoothness}
+                                onChange={
+                                    handleShouldForceCurveSmoothnessChange
+                                }
                             />
                         }
                         label="force curve smoothness"

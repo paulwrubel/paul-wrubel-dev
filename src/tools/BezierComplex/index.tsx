@@ -12,7 +12,7 @@ import {
 import { ComplexBezierCurve } from "toolhelpers/geometry/beziercurves/ComplexBezierCurve";
 import { Point } from "toolhelpers/geometry/Point";
 
-import BezierSketch from "./BezierCompoundSketch";
+import BezierComplexSketch from "./BezierComplexSketch";
 
 const width = Math.min(1000, window.innerWidth - 10);
 const height = Math.min(600, window.innerHeight - 350);
@@ -32,6 +32,8 @@ const Bezier = () => {
     const [t, setT] = useState<number>(0.5);
     const [approximationSegments, setApproximationSegments] =
         useState<number>(50);
+    const [offset, setOffset] = useState<number>(0);
+
     const [shouldShowProgress, setShouldShowProgress] = useState<boolean>(true);
 
     const handleTChange = (_: Event, newValue: number | number[]) => {
@@ -43,6 +45,10 @@ const Bezier = () => {
         newValue: number | number[],
     ) => {
         setApproximationSegments(newValue as number);
+    };
+
+    const handleOffsetChange = (_: Event, newValue: number | number[]) => {
+        setOffset(newValue as number);
     };
 
     const handleShouldShowProgressChange = (
@@ -79,11 +85,12 @@ const Bezier = () => {
 
     return (
         <>
-            <BezierSketch
+            <BezierComplexSketch
                 width={width}
                 height={height}
                 curve={curve}
                 t={t}
+                offset={offset}
                 shouldShowProgress={shouldShowProgress}
                 approximationSegments={approximationSegments}
             />
@@ -112,7 +119,7 @@ const Bezier = () => {
                     aria-labelledby="t-typography"
                 />
                 <Typography
-                    id="t-typography"
+                    id="approximation-segments-typography"
                     fontFamily='"Source Code Pro", monospace'
                 >
                     # segments: {approximationSegments}
@@ -125,6 +132,21 @@ const Bezier = () => {
                     step={1}
                     valueLabelDisplay="auto"
                     aria-labelledby="approximation-segments-typography"
+                />
+                <Typography
+                    id="offset-typography"
+                    fontFamily='"Source Code Pro", monospace'
+                >
+                    offset: {offset}
+                </Typography>
+                <Slider
+                    value={offset}
+                    onChange={handleOffsetChange}
+                    min={-50}
+                    max={50}
+                    step={1}
+                    valueLabelDisplay="auto"
+                    aria-labelledby="offset-typography"
                 />
                 <Box
                     sx={{

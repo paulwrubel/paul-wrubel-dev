@@ -42,13 +42,17 @@ class Vector {
         );
     }
 
-    rotate(theta: number): Vector {
+    rotateRadians(theta: number): Vector {
         const sin = Math.sin(theta);
         const cos = Math.cos(theta);
         return new Vector(
             this.x * cos - this.y * sin,
             this.x * sin + this.y * cos,
         );
+    }
+
+    rotateDegrees(degrees: number): Vector {
+        return this.rotateRadians(degrees * (Math.PI / 180));
     }
 
     copy() {

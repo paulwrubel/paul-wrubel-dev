@@ -29,6 +29,13 @@ class ComplexBezierCurve implements BezierCurve {
         return this.#points.length - 1;
     }
 
+    length(numSegments: number): number {
+        return this.getApproximationSegments(1.0, numSegments).reduce(
+            (acc, segment) => acc + segment.length,
+            0,
+        );
+    }
+
     draw(p5: p5Types, maxT: number, numSegments: number, offset?: number) {
         const lines = this.getApproximationSegments(maxT, numSegments, offset);
         lines.forEach((line) => line.draw(p5));
@@ -102,10 +109,7 @@ class ComplexBezierCurve implements BezierCurve {
             return this.#points[0].lerp(this.#points[1], dist);
         }
         const segments = this.getApproximationSegments(1.0, numSegments);
-        const totalDistance = segments.reduce(
-            (acc, segment) => acc + segment.length,
-            0,
-        );
+        const totalDistance = this.length(numSegments);
         const targetDist = totalDistance * dist;
         let accumulatedDistance = 0;
         for (let i = 0; i < segments.length; i++) {
@@ -185,7 +189,7 @@ class ComplexBezierCurve implements BezierCurve {
     }
 
     getNormalVectorAtT(t: number): Vector {
-        return this.getTangentVectorAtT(t).rotate(Math.PI / 2);
+        return this.getTangentVectorAtT(t).rotateRadians(Math.PI / 2);
     }
 
     copy(): ComplexBezierCurve {

@@ -16,21 +16,25 @@ const colorsByOrder = ["#999", "#9D9", "#99D", "#D99", "#DD9", "#D9D", "#9DD"];
 let indexBeingDragged = -1;
 const pointOffset: Point = new Point(0, 0);
 
-const BezierSketch = ({
-    width,
-    height,
-    curve,
-    t,
-    shouldShowProgress,
-    approximationSegments,
-}: {
+type BezierComplexSketchProps = {
     width: number;
     height: number;
     curve: ComplexBezierCurve;
     t: number;
+    offset: number;
     shouldShowProgress: boolean;
     approximationSegments: number;
-}) => {
+};
+
+const BezierComplexSketch = ({
+    width,
+    height,
+    curve,
+    t,
+    offset,
+    shouldShowProgress,
+    approximationSegments,
+}: BezierComplexSketchProps) => {
     const isPointInCircle = (
         point: Point,
         center: Point,
@@ -142,8 +146,12 @@ const BezierSketch = ({
         p5.push();
         p5.noFill();
         p5.strokeWeight(2);
-        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments, -30);
-        curve.draw(p5, shouldShowProgress ? t : 1, approximationSegments, 30);
+        curve.draw(
+            p5,
+            shouldShowProgress ? t : 1,
+            approximationSegments,
+            offset,
+        );
         p5.pop();
 
         // draw point info
@@ -222,4 +230,4 @@ const BezierSketch = ({
     );
 };
 
-export default BezierSketch;
+export default BezierComplexSketch;

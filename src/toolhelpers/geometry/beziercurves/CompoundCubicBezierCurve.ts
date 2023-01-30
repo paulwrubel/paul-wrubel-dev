@@ -58,6 +58,10 @@ class CompoundCubicBezierCurve implements BezierCurve {
         }
     }
 
+    get curves(): BezierCurve[] {
+        return this.#curves.map((curve) => curve.copy());
+    }
+
     get points(): Point[] {
         return [
             this.#curves[0].points[0],
@@ -67,6 +71,17 @@ class CompoundCubicBezierCurve implements BezierCurve {
 
     get order(): number {
         return 3;
+    }
+
+    get curveCount(): number {
+        return this.#curves.length;
+    }
+
+    length(numSegments: number): number {
+        return this.getApproximationSegments(1.0, numSegments).reduce(
+            (acc, segment) => acc + segment.length,
+            0,
+        );
     }
 
     draw(p5: p5Types, maxT: number, numSegments: number, offset?: number) {
@@ -92,10 +107,7 @@ class CompoundCubicBezierCurve implements BezierCurve {
             throw new Error(DistOutOfBoundsErrorString);
         }
         const segments = this.getApproximationSegments(1.0, numSegments);
-        const totalDistance = segments.reduce(
-            (acc, segment) => acc + segment.length,
-            0,
-        );
+        const totalDistance = this.length(numSegments);
         const targetDist = totalDistance * dist;
         let accumulatedDistance = 0;
         for (let i = 0; i < segments.length; i++) {
@@ -111,7 +123,7 @@ class CompoundCubicBezierCurve implements BezierCurve {
         return this.#curves.at(-1)?.points.at(-1) as Point;
     }
 
-    #getIndexAndTranslatedTFromT(t: number): {
+    getIndexAndTranslatedTFromT(t: number): {
         index: number;
         translatedT: number;
     } {
@@ -136,7 +148,7 @@ class CompoundCubicBezierCurve implements BezierCurve {
         if (t < 0 || t > 1) {
             throw new Error(TOutOfBoundsErrorString);
         }
-        const { index, translatedT } = this.#getIndexAndTranslatedTFromT(t);
+        const { index, translatedT } = this.getIndexAndTranslatedTFromT(t);
         // console.log(`index: ${index}, tt: ${translatedT}`);
 
         // if (t === 1) {
@@ -186,12 +198,12 @@ class CompoundCubicBezierCurve implements BezierCurve {
         if (t < 0 || t > 1) {
             throw new Error(TOutOfBoundsErrorString);
         }
-        const { index, translatedT } = this.#getIndexAndTranslatedTFromT(t);
+        const { index, translatedT } = this.getIndexAndTranslatedTFromT(t);
         return this.#curves[index].getTangentVectorAtT(translatedT);
     }
 
     getNormalVectorAtT(t: number): Vector {
-        return this.getTangentVectorAtT(t).rotate(Math.PI / 2);
+        return this.getTangentVectorAtT(t).rotateRadians(Math.PI / 2);
     }
 
     copy(): CompoundCubicBezierCurve {
