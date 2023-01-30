@@ -12,6 +12,8 @@ interface BezierCurve {
 
     order: number;
 
+    length(numSegments: number): number;
+
     draw(p5: p5Types, maxT: number, numSegments: number, offset?: number): void;
 
     drawUsingP5(
