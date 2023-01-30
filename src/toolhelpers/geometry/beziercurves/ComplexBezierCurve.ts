@@ -161,7 +161,7 @@ class ComplexBezierCurve implements BezierCurve {
         let thisPoint =
             offset === 0
                 ? prePoint
-                : prePoint.add(this.getNormalVectorAtT(0).mult(offset));
+                : prePoint.add(this.getNormalVectorAtT(0).multipliedBy(offset));
         // for (let i = interval; i <= 1; i += interval) {
         for (let i = 0; i < numSegments; i++) {
             const nextT = interval * (i + 1);
@@ -170,7 +170,7 @@ class ComplexBezierCurve implements BezierCurve {
                 offset === 0
                     ? nextPrePoint
                     : nextPrePoint.add(
-                          this.getNormalVectorAtT(nextT).mult(offset),
+                          this.getNormalVectorAtT(nextT).multipliedBy(offset),
                       );
             segments.push(new Line(thisPoint, nextPoint));
             thisPoint = nextPoint;
@@ -189,7 +189,7 @@ class ComplexBezierCurve implements BezierCurve {
     }
 
     getNormalVectorAtT(t: number): Vector {
-        return this.getTangentVectorAtT(t).rotateRadians(Math.PI / 2);
+        return this.getTangentVectorAtT(t).rotatedByRadians(Math.PI / 2);
     }
 
     copy(): ComplexBezierCurve {

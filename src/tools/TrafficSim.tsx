@@ -5,13 +5,12 @@ const width = 500;
 const height = 500;
 
 const TrafficSim = () => {
-    //See annotations in JS for more information
     const setup = (p5: p5Types, canvasParentRef: Element) => {
         p5.createCanvas(width, height).parent(canvasParentRef);
     };
 
     const draw = (p5: p5Types) => {
-        p5.background(100);
+        p5.background(p5.color("#000"));
     };
 
     return <Sketch setup={setup} draw={draw} />;

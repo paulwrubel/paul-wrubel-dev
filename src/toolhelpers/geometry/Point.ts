@@ -1,5 +1,7 @@
-import { Vector } from "./Vector";
+import p5Types from "p5";
 
+import { Line } from "./Line";
+import { Vector } from "./Vector";
 class Point {
     x: number;
     y: number;
@@ -9,15 +11,28 @@ class Point {
         this.y = y;
     }
 
-    to = (p: Point): Vector => new Vector(p.x - this.x, p.y - this.y);
+    drawAsCircle(p5: p5Types, diameter: number) {
+        p5.circle(this.x, this.y, diameter);
+    }
 
-    add = (v: Vector): Point => new Point(this.x + v.x, this.y + v.y);
+    to(p: Point): Vector {
+        return new Vector(p.x - this.x, p.y - this.y);
+    }
 
-    lerp = (to: Point, amount: number) =>
-        new Point(
+    lineTo(p: Point): Line {
+        return new Line(this, p);
+    }
+
+    add(v: Vector): Point {
+        return new Point(this.x + v.x, this.y + v.y);
+    }
+
+    lerp(to: Point, amount: number) {
+        return new Point(
             this.x + (to.x - this.x) * amount,
             this.y + (to.y - this.y) * amount,
         );
+    }
 
     copy(): Point {
         return new Point(this.x, this.y);

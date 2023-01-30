@@ -80,7 +80,7 @@ const Bezier = () => {
             const newPoint = finalPoint.add(directionVector);
             newPoints.push(newPoint);
             finalPoint = newPoint;
-            directionVector = directionVector.rotateDegrees(rotationDegrees);
+            directionVector = directionVector.rotatedByDegrees(rotationDegrees);
         }
         currentPoints.push(...newPoints);
         setCurve(new CompoundCubicBezierCurve(...currentPoints));

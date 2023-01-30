@@ -1,3 +1,6 @@
+import p5Types from "p5";
+
+import { Point } from "./Point";
 class Vector {
     x: number;
     y: number;
@@ -7,32 +10,48 @@ class Vector {
         this.y = y;
     }
 
+    static get Zero() {
+        return new Vector(0, 0);
+    }
+
     get magnitude() {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
-    add(v: Vector): Vector {
+    drawFrom(p5: p5Types, p: Point) {
+        p5.line(p.x, p.y, p.x + this.x, p.y + this.y);
+    }
+
+    addedTo(v: Vector): Vector {
         return new Vector(this.x + v.x, this.y + v.y);
     }
 
-    sub(v: Vector): Vector {
+    subtractedBy(v: Vector): Vector {
         return new Vector(this.x - v.x, this.y - v.y);
     }
 
-    mult(s: number): Vector {
+    multipliedBy(s: number): Vector {
         return new Vector(this.x * s, this.y * s);
     }
 
-    div(s: number): Vector {
+    dividedBy(s: number): Vector {
         return new Vector(this.x / s, this.y / s);
     }
 
     unit(): Vector {
-        return this.div(this.magnitude);
+        return this.dividedBy(this.magnitude);
     }
 
     withMagnitude(m: number): Vector {
-        return this.mult(m / this.magnitude);
+        return this.multipliedBy(m / this.magnitude);
+    }
+
+    dot(v: Vector): number {
+        return this.x * v.x + this.y * v.y;
+    }
+
+    projectedOnto(v: Vector): Vector {
+        return v.unit().multipliedBy(this.dot(v.unit()));
     }
 
     lerp(to: Vector, amount: number): Vector {
@@ -42,7 +61,7 @@ class Vector {
         );
     }
 
-    rotateRadians(theta: number): Vector {
+    rotatedByRadians(theta: number): Vector {
         const sin = Math.sin(theta);
         const cos = Math.cos(theta);
         return new Vector(
@@ -51,8 +70,8 @@ class Vector {
         );
     }
 
-    rotateDegrees(degrees: number): Vector {
-        return this.rotateRadians(degrees * (Math.PI / 180));
+    rotatedByDegrees(degrees: number): Vector {
+        return this.rotatedByRadians(degrees * (Math.PI / 180));
     }
 
     copy() {

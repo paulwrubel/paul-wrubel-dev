@@ -4,6 +4,7 @@ import FABRIK from "tools/FABRIK";
 import MergeMania from "tools/MergeMania";
 import MergeManiaProto from "tools/MergeManiaProto";
 import PeerPong from "tools/PeerPong";
+import Pendulum from "tools/Pendulum";
 
 type Tool = {
     name: string;
@@ -48,6 +49,12 @@ const tools: Tool[] = [
         description:
             "pong, but multiplayer! so, basically just regular pong. built using PeerJS",
         component: <PeerPong />,
+    },
+    {
+        name: "pendulum",
+        description:
+            "physics pendulum! this is a true n-length pendulum simulation. The solver uses constrained point physics simulation (PBD), and is not analytical.",
+        component: <Pendulum />,
     },
 ];
 
