@@ -81,8 +81,73 @@ const BezierCompoundSketch = ({
         }
     };
 
-    const isPointAtIndexDraggable = (index: number): boolean =>
-        !(shouldEnforceSmoothness && index > 3 && index % 3 === 1);
+    // const isPointAtIndexDraggable = (index: number): boolean =>
+    //     !(shouldEnforceSmoothness && index > 3 && index % 3 === 1);
+
+    const drawSubCurveFeatures = (
+        p5: p5Types,
+        subCurve: ComplexBezierCurve,
+        curveIndex: number,
+        tIndex: number,
+        translatedT: number,
+    ) => {
+        let lowerOrderCurve: ComplexBezierCurve = subCurve;
+        let colorIndex = 0;
+        do {
+            // find the color for this order
+            const color = p5.color(
+                colorsByOrder[colorIndex % colorsByOrder.length],
+            );
+            colorIndex++;
+
+            // draw lines between the points
+            lowerOrderCurve
+                .getLinesBetweenPoints()
+                .forEach(({ a: { x: x1, y: y1 }, b: { x: x2, y: y2 } }) => {
+                    p5.push();
+                    p5.stroke(color);
+                    p5.line(x1, y1, x2, y2);
+                    p5.pop();
+                });
+            // draw the points
+            lowerOrderCurve.points.forEach(({ x, y }) => {
+                p5.push();
+                p5.stroke(color);
+                p5.strokeWeight(3);
+                p5.noFill();
+                // p5.fill(color);
+                p5.circle(x, y, 5);
+                p5.pop();
+            });
+            if (lowerOrderCurve.order > 1) {
+                lowerOrderCurve = lowerOrderCurve.getReducedOrderAt(
+                    curveIndex < tIndex
+                        ? 1
+                        : curveIndex > tIndex
+                        ? 0
+                        : translatedT,
+                );
+            } else {
+                break;
+            }
+        } while (lowerOrderCurve.order > 0);
+    };
+
+    const drawLowerOrderCurveFeatures = (p5: p5Types) => {
+        const subCurves = curve.curves;
+        subCurves.forEach((subCurve, i) => {
+            const { index, translatedT } = curve.getIndexAndTranslatedTFromT(t);
+            if (subCurve.order > 1) {
+                drawSubCurveFeatures(
+                    p5,
+                    subCurve as ComplexBezierCurve,
+                    i,
+                    index,
+                    translatedT,
+                );
+            }
+        });
+    };
 
     const mousePressedOrTouchStarted = (p5: p5Types) => {
         for (let i = 0; i < curve.points.length; i++) {
@@ -131,51 +196,7 @@ const BezierCompoundSketch = ({
         p5.background(p5.color("#EEE"));
 
         // draw guidelines for our order and all lower
-        const subCurves = curve.curves;
-        subCurves.forEach((subCurve, i) => {
-            const { index, translatedT } = curve.getIndexAndTranslatedTFromT(t);
-            if (subCurve.order > 1) {
-                let lowerOrderCurve: ComplexBezierCurve =
-                    subCurve as ComplexBezierCurve;
-                let colorIndex = 0;
-                do {
-                    // find the color for this order
-                    const color = p5.color(
-                        colorsByOrder[colorIndex % colorsByOrder.length],
-                    );
-                    colorIndex++;
-
-                    // draw lines between the points
-                    lowerOrderCurve
-                        .getLinesBetweenPoints()
-                        .forEach(
-                            ({ a: { x: x1, y: y1 }, b: { x: x2, y: y2 } }) => {
-                                p5.push();
-                                p5.stroke(color);
-                                p5.line(x1, y1, x2, y2);
-                                p5.pop();
-                            },
-                        );
-                    // draw the points
-                    lowerOrderCurve.points.forEach(({ x, y }) => {
-                        p5.push();
-                        p5.stroke(color);
-                        p5.strokeWeight(3);
-                        p5.noFill();
-                        // p5.fill(color);
-                        p5.circle(x, y, 5);
-                        p5.pop();
-                    });
-                    if (lowerOrderCurve.order > 1) {
-                        lowerOrderCurve = lowerOrderCurve.getReducedOrderAt(
-                            i < index ? 1 : i > index ? 0 : translatedT,
-                        );
-                    } else {
-                        break;
-                    }
-                } while (lowerOrderCurve.order > 0);
-            }
-        });
+        drawLowerOrderCurveFeatures(p5);
 
         // draw the curve itself
         p5.push();
