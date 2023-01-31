@@ -1,7 +1,7 @@
-type Arm = {
+type ArmData = {
     length: number;
-    weight: number;
+    mass: number;
     initialAngle: number;
 };
 
-export type { Arm };
+export type { ArmData };
