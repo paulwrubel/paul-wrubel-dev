@@ -129,7 +129,8 @@ const About = () => {
                         <br />
                         <br />
                         Outside of software, Paul enjoys playing video games,
-                        playing with his cats, rollerblading, and baking.
+                        playing with his cats and dog, rollerblading, and
+                        baking.
                     </ManSection>
                     <ManSection title="attributes" fontSize={fontSizeSecondary}>
                         All are listed in order of most to least experience.
@@ -139,14 +140,14 @@ const About = () => {
                             title="Languages"
                             fontSize={fontSizeSecondary}
                         >
-                            golang, typescript, javascript, python, java, scala,
-                            c
+                            golang, typescript, javascript, rust, python, java,
+                            scala, c
                         </ManSubsection>
                         <ManSubsection
                             title="Technologies"
                             fontSize={fontSizeSecondary}
                         >
-                            git, docker, react, unix, sql, rest, unity3d
+                            git, docker, react, unix, sql, rest, godot, unity3d
                         </ManSubsection>
                         <ManSubsection
                             title="Skills"
