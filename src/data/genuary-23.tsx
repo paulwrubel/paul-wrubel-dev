@@ -1,7 +1,11 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import Day01Paul from "genuaryentries/2023/day01/Paul";
 
-type Author = "Paul Wrubel" | "Selam Berhea";
+const AuthorsLinks = {
+    "Paul Wrubel": "https://github.com/paulwrubel",
+    "Selam Berhea": "https://github.com/sberhea",
+};
+type Author = keyof typeof AuthorsLinks;
 
 type Entry = {
     name: string;
@@ -20,20 +24,7 @@ const days: Day[] = [
     {
         day: "1",
         prompt: "Particles, lots of them.",
-        entries: [
-            {
-                name: "Test",
-                author: "Paul Wrubel",
-                description: "a test sketch1",
-                component: <Day01Paul />,
-            },
-            {
-                name: "Test2",
-                author: "Paul Wrubel",
-                description: "a test sketch1",
-                component: <Day01Paul />,
-            },
-        ],
+        entries: [],
     },
     {
         day: "2",
@@ -162,4 +153,5 @@ const days: Day[] = [
 ];
 
 export type { Author, Entry };
+export { AuthorsLinks };
 export default days;

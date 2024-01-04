@@ -1,6 +1,7 @@
 import {
     Box,
     Container,
+    Link as MuiLink,
     Paper,
     Typography,
     useMediaQuery,
@@ -9,7 +10,7 @@ import {
 
 import { Helmet } from "react-helmet-async";
 
-import daysData from "data/genuary-23";
+import daysData, { AuthorsLinks } from "data/genuary-23";
 
 const Genuary = () => {
     const theme = useTheme();
@@ -18,7 +19,7 @@ const Genuary = () => {
     const fontSizePrimary = isBelowMediumBreakpoint ? "1.6rem" : "2rem";
     const fontSizeSecondary = isBelowMediumBreakpoint ? "1rem" : "1.8rem";
     const fontSizeTertiary = isBelowMediumBreakpoint ? "1rem" : "1.5rem";
-    // const fontSizeBody = isBelowMediumBreakpoint ? "1rem" : "1.3rem";
+    const fontSizeBody = isBelowMediumBreakpoint ? "1rem" : "1.3rem";
 
     const days = daysData
         .slice()
@@ -39,44 +40,33 @@ const Genuary = () => {
                         my: 4,
                     }}
                 >
-                    <Box
-                        sx={{
-                            width: 1,
-                            display: "flex",
-                            flexWrap: "wrap",
-                            alignItems: "center",
-                            rowGap: 1,
-                        }}
+                    <Typography
+                        // flexGrow={1}
+                        // flexShrink={0}
+                        // noWrap
+                        variant="h1"
+                        fontSize={fontSizePrimary}
+                        fontFamily='"Source Code Pro", monospace'
+                        sx={{ overflowWrap: "normal" }}
                     >
-                        <Typography
-                            // flexGrow={1}
-                            // flexShrink={0}
-                            // noWrap
-                            variant="h1"
-                            fontSize={fontSizePrimary}
-                            fontFamily='"Source Code Pro", monospace'
-                            sx={{ overflowWrap: "normal" }}
-                        >
-                            {"> ./genuary list"}
-                        </Typography>
-                    </Box>
+                        {"> ./genuary list 2023"}
+                    </Typography>
                 </Paper>
                 <Paper
                     variant="outlined"
                     elevation={0}
                     sx={{
-                        p: 2,
+                        py: 4,
+                        px: "10%",
                         mx: 2,
                         my: 2,
                     }}
                 >
                     <Box
                         sx={{
-                            width: 1,
                             display: "flex",
-                            flexWrap: "wrap",
-                            alignItems: "center",
-                            rowGap: 1,
+                            flexDirection: "column",
+                            gap: 2,
                         }}
                     >
                         <Typography
@@ -84,11 +74,32 @@ const Genuary = () => {
                             // flexShrink={0}
                             // noWrap
                             variant="h1"
-                            fontSize={fontSizePrimary}
+                            fontSize={fontSizeTertiary}
                             fontFamily='"Source Code Pro", monospace'
                             sx={{ overflowWrap: "normal" }}
                         >
-                            {"> ./genuary list"}
+                            <MuiLink>Genuary</MuiLink> is an advent-like project
+                            during the month of January which supplies prompts
+                            for inspiring computer-generated art pieces.
+                        </Typography>
+                        <Typography
+                            // flexGrow={1}
+                            // flexShrink={0}
+                            // noWrap
+                            variant="h1"
+                            fontSize={fontSizeTertiary}
+                            fontFamily='"Source Code Pro", monospace'
+                            sx={{ overflowWrap: "normal" }}
+                        >
+                            These are contribution for 2023 from myself and{" "}
+                            <MuiLink
+                                target="_blank"
+                                rel="noreferrer"
+                                href={AuthorsLinks["Selam Berhea"]}
+                            >
+                                Selam Berhea
+                            </MuiLink>
+                            .
                         </Typography>
                     </Box>
                 </Paper>
@@ -165,7 +176,15 @@ const Genuary = () => {
                                                     fontSize={fontSizeSecondary}
                                                     fontFamily='"Source Code Pro", monospace'
                                                 >
-                                                    {author}
+                                                    <MuiLink
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        href={
+                                                            AuthorsLinks[author]
+                                                        }
+                                                    >
+                                                        {author}
+                                                    </MuiLink>
                                                 </Typography>
                                                 <Typography
                                                     fontSize={fontSizeTertiary}
