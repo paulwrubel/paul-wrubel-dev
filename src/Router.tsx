@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import Root from "Root";
 import About from "views/About";
+import Genuary from "views/Genuary";
 import Home from "views/Home";
 import NotFound from "views/NotFound";
 import Projects from "views/Projects";
@@ -38,6 +39,7 @@ const Router = () => {
                             />
                         }
                     />
+                    <Route path="/genuary" element={<Genuary />} />
                     <Route path="/tools" element={<ToolsIndex />} />
                     <Route path="/tools/:tool" element={<Tool />} />
                     <Route path="*" element={<NotFound />} />
