@@ -70,6 +70,12 @@ const NavBar = () => {
             displayName: ">projects",
         },
         {
+            name: "genuary",
+            to: "/genuary",
+            selected: match?.pathname === "/genuary",
+            displayName: ">genuary",
+        },
+        {
             name: "tools",
             to: "/tools",
             selected: isBelowSmallBreakpoint
