@@ -78,9 +78,16 @@ const Genuary = () => {
                             fontFamily='"Source Code Pro", monospace'
                             sx={{ overflowWrap: "normal" }}
                         >
-                            <MuiLink>Genuary</MuiLink> is an advent-like project
-                            during the month of January which supplies prompts
-                            for inspiring computer-generated art pieces.
+                            <MuiLink
+                                target="_blank"
+                                rel="noreferrer"
+                                href="https://genuary.art"
+                            >
+                                Genuary
+                            </MuiLink>{" "}
+                            is an advent-like project during the month of
+                            January which supplies prompts for inspiring
+                            computer-generated art pieces.
                         </Typography>
                         <Typography
                             // flexGrow={1}
@@ -187,13 +194,17 @@ const Genuary = () => {
                                                     </MuiLink>
                                                 </Typography>
                                                 <Typography
-                                                    fontSize={fontSizeTertiary}
+                                                    // make italic
+                                                    sx={{
+                                                        fontStyle: "italic",
+                                                    }}
+                                                    fontSize={fontSizeSecondary}
                                                     fontFamily='"Source Code Pro", monospace'
                                                 >
                                                     {name}
                                                 </Typography>
                                                 <Typography
-                                                    fontSize={fontSizeTertiary}
+                                                    fontSize={fontSizeBody}
                                                     fontFamily='"Source Code Pro", monospace'
                                                 >
                                                     {description}
