@@ -24,7 +24,14 @@ const days: Day[] = [
     {
         day: "1",
         prompt: "Particles, lots of them.",
-        entries: [],
+        entries: [
+            {
+                name: "Hello 2024!",
+                author: "Paul Wrubel",
+                description: "a celebration of the new year.",
+                component: <Day01Paul />,
+            },
+        ],
     },
     {
         day: "2",
