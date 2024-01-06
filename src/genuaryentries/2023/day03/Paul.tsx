@@ -23,7 +23,8 @@ const sketch: Sketch = (p5) => {
     const QUADRANT_SIZE = LEVEL_BASE_SIZE / 2;
     const LEVELS = 50;
 
-    const FRAMES_PER_RECURSION = 50;
+    const RECURSION_SPEED_SCALAR = 0.0003;
+    let recursionProgress = 0.0;
 
     const INSCRIBED_TRIANGLE_SHORT = (2 - Math.sqrt(3)) * QUADRANT_SIZE;
     const INSCRIBED_TRIANGLE_LONG = QUADRANT_SIZE - INSCRIBED_TRIANGLE_SHORT;
@@ -89,8 +90,8 @@ const sketch: Sketch = (p5) => {
     p5.draw = () => {
         p5.background(255);
 
-        const recursionProgress =
-            (p5.frameCount % FRAMES_PER_RECURSION) / FRAMES_PER_RECURSION;
+        recursionProgress += p5.deltaTime * RECURSION_SPEED_SCALAR;
+        recursionProgress %= 1.0;
 
         const x = p5.mouseX;
         const y = p5.mouseY;
