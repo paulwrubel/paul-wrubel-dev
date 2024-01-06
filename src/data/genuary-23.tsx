@@ -51,9 +51,10 @@ const days: Day[] = [
         prompt: "Droste Effect.",
         entries: [
             {
-                name: "TODO",
+                name: "Geometric Infinitism",
                 author: "Paul Wrubel",
-                description: "TODO",
+                description:
+                    "How far down does it go? (Click to warp to another dimension)",
                 component: <Day03Paul />,
             },
         ],
