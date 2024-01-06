@@ -1,5 +1,5 @@
 import { P5CanvasInstance, ReactP5Wrapper, Sketch } from "@p5-wrapper/react";
-import { Color, Image, Vector } from "p5";
+import { Image } from "p5";
 
 import rawImage from "./Happy2024.png";
 
@@ -158,7 +158,6 @@ const sketch: Sketch = (p5: P5CanvasInstance) => {
                 if (particles.length < MAX_PARTICLES) {
                     addParticle();
                 }
-                // console.log(particles.length);
             }
         }
     };

@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import Day01Paul from "genuaryentries/2023/day01/Paul";
 import Day01Selam from "genuaryentries/2023/day01/Selam";
+import Day03Paul from "genuaryentries/2023/day03/Paul";
 
 const AuthorsLinks = {
     "Paul Wrubel": "https://github.com/paulwrubel",
@@ -48,6 +49,14 @@ const days: Day[] = [
     {
         day: "3",
         prompt: "Droste Effect.",
+        entries: [
+            {
+                name: "TODO",
+                author: "Paul Wrubel",
+                description: "TODO",
+                component: <Day03Paul />,
+            },
+        ],
     },
     {
         day: "4",
