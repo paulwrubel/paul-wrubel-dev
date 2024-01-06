@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import Day01Paul from "genuaryentries/2023/day01/Paul";
 import Day01Selam from "genuaryentries/2023/day01/Selam";
+import Day03Paul from "genuaryentries/2023/day03/Paul";
 
 const AuthorsLinks = {
     "Paul Wrubel": "https://github.com/paulwrubel",
@@ -48,6 +49,15 @@ const days: Day[] = [
     {
         day: "3",
         prompt: "Droste Effect.",
+        entries: [
+            {
+                name: "Geometric Infinitism",
+                author: "Paul Wrubel",
+                description:
+                    "How far down does it go? (Click to warp to another dimension)",
+                component: <Day03Paul />,
+            },
+        ],
     },
     {
         day: "4",
