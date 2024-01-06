@@ -2,6 +2,7 @@
 import Day01Paul from "genuaryentries/2023/day01/Paul";
 import Day01Selam from "genuaryentries/2023/day01/Selam";
 import Day03Paul from "genuaryentries/2023/day03/Paul";
+import Day06Paul from "genuaryentries/2023/day06/Paul";
 
 const AuthorsLinks = {
     "Paul Wrubel": "https://github.com/paulwrubel",
@@ -44,7 +45,6 @@ const days: Day[] = [
     {
         day: "2",
         prompt: "No palettes.",
-        entries: [],
     },
     {
         day: "3",
@@ -70,6 +70,14 @@ const days: Day[] = [
     {
         day: "6",
         prompt: "Screensaver.",
+        entries: [
+            {
+                name: "Bubbles",
+                author: "Paul Wrubel",
+                description: "bright bouncing bubbles",
+                component: <Day06Paul />,
+            },
+        ],
     },
     {
         day: "7",
