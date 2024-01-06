@@ -35,6 +35,46 @@ const sketch: Sketch = (p5) => {
         bubbles.push(bubble);
     };
 
+    const checkBubbleAgainstOtherBubble = (
+        bubble: Bubble,
+        otherBubble: Bubble,
+    ) => {
+        const distance = bubble.position.dist(otherBubble.position);
+        if (distance < bubble.r + otherBubble.r) {
+            const away = Vector.sub(bubble.position, otherBubble.position);
+
+            const overlap = bubble.r + otherBubble.r - distance;
+            bubble.position.add(away.mult(overlap / distance));
+
+            const mag = bubble.velocity.mag();
+            bubble.velocity = away.copy().setMag(mag);
+            otherBubble.velocity = away.copy().mult(-1).setMag(mag);
+        }
+    };
+
+    const checkBubbleBoundsCollision = (bubble: Bubble) => {
+        if (bubble.position.y > p5.height - bubble.r) {
+            bubble.position.y = p5.height - bubble.r;
+            bubble.velocity.y *= -1;
+            bubble.velocity.x += p5.random(-1, 1);
+        }
+
+        if (bubble.position.y < CEILING + bubble.r) {
+            bubble.position.y = CEILING + bubble.r;
+            bubble.velocity.y *= -1;
+        }
+
+        if (bubble.position.y < WALL_MIN) {
+            if (bubble.position.x < bubble.r) {
+                bubble.position.x = bubble.r;
+                bubble.velocity.x *= -1;
+            } else if (bubble.position.x > p5.width - bubble.r) {
+                bubble.position.x = p5.width - bubble.r;
+                bubble.velocity.x *= -1;
+            }
+        }
+    };
+
     const updateBubbles = () => {
         for (const bubble of bubbles) {
             bubble.position.add(bubble.velocity);
@@ -46,43 +86,10 @@ const sketch: Sketch = (p5) => {
                     continue;
                 }
 
-                const distance = bubble.position.dist(otherBubble.position);
-                if (distance < bubble.r + otherBubble.r) {
-                    const away = Vector.sub(
-                        bubble.position,
-                        otherBubble.position,
-                    );
-
-                    const overlap = bubble.r + otherBubble.r - distance;
-                    bubble.position.add(away.mult(overlap / distance));
-
-                    const mag = bubble.velocity.mag();
-                    bubble.velocity = away.copy().setMag(mag);
-                    otherBubble.velocity = away.copy().mult(-1).setMag(mag);
-                }
+                checkBubbleAgainstOtherBubble(bubble, otherBubble);
             }
 
-            if (bubble.position.y > p5.height - bubble.r) {
-                bubble.position.y = p5.height - bubble.r;
-                bubble.velocity.y *= -1;
-                bubble.velocity.x += p5.random(-1, 1);
-            }
-
-            if (bubble.position.y < CEILING + bubble.r) {
-                bubble.position.y = CEILING + bubble.r;
-                bubble.velocity.y *= -1;
-                // bubble.velocity.x += p5.random(-1, 1);
-            }
-
-            if (bubble.position.y < WALL_MIN) {
-                if (bubble.position.x < bubble.r) {
-                    bubble.position.x = bubble.r;
-                    bubble.velocity.x *= -1;
-                } else if (bubble.position.x > p5.width - bubble.r) {
-                    bubble.position.x = p5.width - bubble.r;
-                    bubble.velocity.x *= -1;
-                }
-            }
+            checkBubbleBoundsCollision(bubble);
         }
     };
 
