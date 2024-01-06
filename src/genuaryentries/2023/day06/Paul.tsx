@@ -14,6 +14,8 @@ const sketch: Sketch = (p5) => {
     };
     const bubbles: Bubble[] = [];
 
+    const SPEED_SCALAR = 0.05;
+
     const CEILING = -100;
     const WALL_MIN = HEIGHT / 2;
     const BUBBLE_ADD_INTERVAL = 30;
@@ -77,7 +79,9 @@ const sketch: Sketch = (p5) => {
 
     const updateBubbles = () => {
         for (const bubble of bubbles) {
-            bubble.position.add(bubble.velocity);
+            bubble.position.add(
+                bubble.velocity.copy().mult(p5.deltaTime * SPEED_SCALAR),
+            );
             bubble.velocity.add(Vector.mult(GRAVITY, 1 - bubble.buoyancy));
             bubble.velocity.mult(FRICTION);
 
