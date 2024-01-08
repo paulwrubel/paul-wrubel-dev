@@ -3,6 +3,7 @@ import Day01Paul from "genuaryentries/2023/day01/Paul";
 import Day01Selam from "genuaryentries/2023/day01/Selam";
 import Day03Paul from "genuaryentries/2023/day03/Paul";
 import Day06Paul from "genuaryentries/2023/day06/Paul";
+import Day07Paul from "genuaryentries/2023/day07/Paul";
 
 const AuthorsLinks = {
     "Paul Wrubel": "https://github.com/paulwrubel",
@@ -82,6 +83,14 @@ const days: Day[] = [
     {
         day: "7",
         prompt: "Progress bar / indicator / loading animation.",
+        entries: [
+            {
+                name: "Bar and Spinner",
+                author: "Paul Wrubel",
+                description: "maybe one day it will load...",
+                component: <Day07Paul />,
+            },
+        ],
     },
     {
         day: "8",
