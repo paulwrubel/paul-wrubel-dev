@@ -2,6 +2,7 @@
 import Day01Paul from "genuaryentries/2023/day01/Paul";
 import Day01Selam from "genuaryentries/2023/day01/Selam";
 import Day03Paul from "genuaryentries/2023/day03/Paul";
+import Day05Paul from "genuaryentries/2023/day05/Paul";
 import Day06Paul from "genuaryentries/2023/day06/Paul";
 import Day07Paul from "genuaryentries/2023/day07/Paul";
 
@@ -67,6 +68,14 @@ const days: Day[] = [
     {
         day: "5",
         prompt: "In the style of Vera Molnár (1924-2023).",
+        entries: [
+            {
+                name: "Panes",
+                author: "Paul Wrubel",
+                description: "click to regenerate",
+                component: <Day05Paul />,
+            },
+        ],
     },
     {
         day: "6",
