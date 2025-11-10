@@ -7,7 +7,7 @@ import Day06Paul from "genuaryentries/2023/day06/Paul";
 import Day07Paul from "genuaryentries/2023/day07/Paul";
 
 const AuthorsLinks = {
-    "Paul Wrubel": "https://github.com/paulwrubel",
+    "Paul LeClair": "https://github.com/paulwrubel",
     "Selam Berhea": "https://github.com/sberhea",
 };
 type Author = keyof typeof AuthorsLinks;
@@ -32,7 +32,7 @@ const days: Day[] = [
         entries: [
             {
                 name: "Hello 2024!",
-                author: "Paul Wrubel",
+                author: "Paul LeClair",
                 description: "a celebration of the new year.",
                 component: <Day01Paul />,
             },
@@ -54,7 +54,7 @@ const days: Day[] = [
         entries: [
             {
                 name: "Geometric Infinitism",
-                author: "Paul Wrubel",
+                author: "Paul LeClair",
                 description:
                     "How far down does it go? (Click to warp to another dimension)",
                 component: <Day03Paul />,
@@ -71,7 +71,7 @@ const days: Day[] = [
         entries: [
             {
                 name: "Panes",
-                author: "Paul Wrubel",
+                author: "Paul LeClair",
                 description: "click to regenerate",
                 component: <Day05Paul />,
             },
@@ -83,7 +83,7 @@ const days: Day[] = [
         entries: [
             {
                 name: "Bubbles",
-                author: "Paul Wrubel",
+                author: "Paul LeClair",
                 description: "bright bouncing bubbles",
                 component: <Day06Paul />,
             },
@@ -95,7 +95,7 @@ const days: Day[] = [
         entries: [
             {
                 name: "Bar and Spinner",
-                author: "Paul Wrubel",
+                author: "Paul LeClair",
                 description: "maybe one day it will load...",
                 component: <Day07Paul />,
             },

@@ -1,6 +1,6 @@
 export const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-export const peerPrefix = "paulwrubel-dev-peerpong-";
+export const peerPrefix = "paulleclair-dev-peerpong-";
 
 export const lobbyInfoMessageType = "peerjswrapper_lobby-info";
 

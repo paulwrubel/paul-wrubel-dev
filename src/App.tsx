@@ -6,7 +6,7 @@ const App = () => {
     return (
         <>
             <Helmet>
-                <title>{"> paul wrubel"}</title>
+                <title>{"> paul leclair"}</title>
             </Helmet>
             <Router />
         </>

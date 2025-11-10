@@ -107,7 +107,7 @@ const Projects = ({
     return (
         <>
             <Helmet>
-                <title>{"> projects | paul wrubel"}</title>
+                <title>{"> projects | paul leclair"}</title>
             </Helmet>
             <Container sx={{ my: 10 }}>
                 <Paper

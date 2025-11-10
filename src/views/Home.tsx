@@ -18,12 +18,13 @@ const commandSteps: { s: string; i: number }[] = [
     { s: "a", i: 50 },
     { s: "u", i: 50 },
     { s: "l\u200B", i: 50 },
-    { s: "w", i: 270 },
-    { s: "r", i: 70 },
-    { s: "u", i: 70 },
-    { s: "b", i: 70 },
+    { s: "l", i: 270 },
     { s: "e", i: 70 },
-    { s: "l\u200B", i: 70 },
+    { s: "c", i: 70 },
+    { s: "l", i: 70 },
+    { s: "a", i: 70 },
+    { s: "i", i: 70 },
+    { s: "r\u200B", i: 70 },
     { s: ".", i: 300 },
     { s: "d", i: 300 },
     { s: "e", i: 100 },
@@ -186,7 +187,7 @@ const Home = ({
     return (
         <>
             <Helmet>
-                <title>{"> paul wrubel"}</title>
+                <title>{"> paul leclair"}</title>
             </Helmet>
             <Container sx={{ my: 10 }}>
                 <Paper

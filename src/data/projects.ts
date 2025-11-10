@@ -13,6 +13,15 @@ type Project = {
 
 const projects: Project[] = [
     {
+        name: "luxide (ui)",
+        description: `A UI for the luxide pathtracing engine, written in Svelte.`,
+        date: dayjs("2023-11-18", "YYYY-MM-DD"),
+        technologies: [],
+        languages: ["svelte"],
+        link: "https://luxide-dev.paulleclair.dev/",
+        codeLink: "https://github.com/paulwrubel/luxide",
+    },
+    {
         name: "advent of code 2023",
         description: `Solutions for the puzzles from Advent of Code, 2023. All solutions are written in Rust.`,
         date: dayjs("2023-12-01", "YYYY-MM-DD"),
@@ -56,13 +65,13 @@ const projects: Project[] = [
         codeLink: "https://github.com/paulwrubel/merge-mania",
     },
     {
-        name: "paulwrubel.dev",
+        name: "paulleclair.dev",
         description: `A simple website to represent myself and my work. It's what you're looking at right now!
             It additionally serves the purpose of hosting some tools I wrote and didn't know where else to put.`,
         date: dayjs("2023-01-05", "YYYY-MM-DD"),
         technologies: ["react"],
         languages: ["typescript", "javascript", "css"],
-        link: "https://www.paulwrubel.dev/",
+        link: "https://www.paulleclair.dev/",
         codeLink: "https://github.com/paulwrubel/paul-wrubel-dev",
     },
     {
@@ -122,7 +131,7 @@ const projects: Project[] = [
         date: dayjs("2021-04-30", "YYYY-MM-DD"),
         technologies: ["react", "p5js"],
         languages: ["typescript", "javascript", "css"],
-        link: "https://bloom.voxaelfox.com/",
+        link: "https://bloom.paulleclair.com/",
         codeLink: "https://github.com/paulwrubel/bloom",
     },
     {
@@ -132,7 +141,7 @@ const projects: Project[] = [
         date: dayjs("2020-02-09", "YYYY-MM-DD"),
         technologies: ["react", "p5js"],
         languages: ["typescript", "javascript", "css"],
-        link: "https://vixuals.voxaelfox.com/",
+        link: "https://vixuals.paulleclair.com/",
         codeLink: "https://github.com/paulwrubel/vixuals",
     },
     {
