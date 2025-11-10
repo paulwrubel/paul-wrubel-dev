@@ -6,7 +6,7 @@ const ToolsIndex = () => {
     return (
         <>
             <Helmet>
-                <title>{"> tools | paul wrubel"}</title>
+                <title>{"> tools | paul leclair"}</title>
             </Helmet>
             <Container sx={{ my: 10, flexGrow: 1 }}>
                 <Paper

@@ -41,7 +41,7 @@ const NavBar = () => {
             fontFamily='"Source Code Pro", monospace'
             sx={{ userSelect: "none" }}
         >
-            {"> paul wrubel"}
+            {"> paul leclair"}
         </Typography>
     );
 

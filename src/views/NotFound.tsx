@@ -7,7 +7,7 @@ const NotFound = () => {
     return (
         <>
             <Helmet>
-                <title>{"> 404 | paul wrubel"}</title>
+                <title>{"> 404 | paul leclair"}</title>
             </Helmet>
             <Container sx={{ py: 20 }}>
                 <Box sx={{ m: 10 }}>

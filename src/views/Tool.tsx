@@ -17,7 +17,7 @@ const Tool = () => {
     return (
         <>
             <Helmet>
-                <title>{`> ${tool.name} | paul wrubel`}</title>
+                <title>{`> ${tool.name} | paul leclair`}</title>
             </Helmet>
             <Container sx={{ my: 10, height: "78vh" }}>
                 <Box

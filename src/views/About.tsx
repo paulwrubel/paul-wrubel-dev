@@ -11,7 +11,7 @@ import { Helmet } from "react-helmet-async";
 
 const links: { name: string; url: string }[] = [
     { name: "github", url: "https://github.com/paulwrubel" },
-    { name: "linkedin", url: "https://www.linkedin.com/in/pauljwrubel/" },
+    { name: "linkedin", url: "https://www.linkedin.com/in/paulleclair/" },
 ];
 
 const ManSection = ({
@@ -92,7 +92,7 @@ const About = () => {
     return (
         <>
             <Helmet>
-                <title>{"> about | paul wrubel"}</title>
+                <title>{"> about | paul leclair"}</title>
             </Helmet>
             <Container sx={{ my: 10 }}>
                 <Paper variant="outlined" elevation={0} sx={{ p: 2, m: 2 }}>
@@ -102,19 +102,19 @@ const About = () => {
                         // gutterBottom
                         fontFamily='"Source Code Pro", monospace'
                     >
-                        {"> man paul-wrubel"}
+                        {"> man paul-leclair"}
                     </Typography>
                 </Paper>
                 <Paper variant="outlined" elevation={0} sx={{ p: 2, m: 2 }}>
                     <ManSection title="name" fontSize={fontSizeSecondary}>
-                        Paul Wrubel - software engineer and technology
+                        Paul LeClair - software engineer and technology
                         enthusiast
                     </ManSection>
                     <ManSection
                         title="description"
                         fontSize={fontSizeSecondary}
                     >
-                        Paul Wrubel is a software engineer from Michigan. He
+                        Paul LeClair is a software engineer from Michigan. He
                         attended Michigan Technology University where he
                         graduated with a B.S. in Computer Science and a Minor in
                         Mathematics. During this, he served as a Software
@@ -140,8 +140,8 @@ const About = () => {
                             title="Languages"
                             fontSize={fontSizeSecondary}
                         >
-                            golang, typescript, javascript, rust, python, java,
-                            scala, c
+                            golang, rust, typescript, javascript, svelte,
+                            python, java, scala, c
                         </ManSubsection>
                         <ManSubsection
                             title="Technologies"
