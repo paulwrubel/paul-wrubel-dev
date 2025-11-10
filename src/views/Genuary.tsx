@@ -28,7 +28,7 @@ const Genuary = () => {
     return (
         <>
             <Helmet>
-                <title>{"> genuary | paul wrubel"}</title>
+                <title>{"> genuary | paul leclair"}</title>
             </Helmet>
             <Container sx={{ my: 10 }}>
                 <Paper
